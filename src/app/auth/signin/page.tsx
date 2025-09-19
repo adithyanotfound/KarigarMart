@@ -5,6 +5,7 @@ import { signIn, getSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -34,7 +35,9 @@ export default function SignInPage() {
 
       if (result?.error) {
         setError("Invalid email or password")
+        toast.error("Invalid email or password")
       } else {
+        toast.success("Welcome back!")
         // Get updated session to check user role
         const session = await getSession()
         
@@ -54,6 +57,7 @@ export default function SignInPage() {
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
+      toast.error("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -71,7 +75,7 @@ export default function SignInPage() {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
             <CardDescription>
-              Sign in to your ArtisanMarket account
+              Sign in to your KarigarMart account
             </CardDescription>
           </CardHeader>
           <CardContent>

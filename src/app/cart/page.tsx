@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
+import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -65,6 +66,10 @@ export default function CartPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+      toast.success("Item removed from cart")
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to remove item from cart")
     },
   })
 
@@ -86,6 +91,10 @@ export default function CartPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+      toast.success("Cart updated")
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update cart")
     },
   })
 

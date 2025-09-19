@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { ArrowRight, CheckCircle } from "lucide-react"
+import { ArrowRight, CheckCircle, Mic, MicOff, Play, Square } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -22,10 +23,18 @@ export default function OnboardingPage() {
   
   const [formData, setFormData] = useState({
     name: session?.user?.name || "",
-    story: ""
+    story: "",
+    about: ""
   })
 
-  const totalSteps = 3
+  const [isRecording, setIsRecording] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+
+  const totalSteps = 4
 
 
   const handleNext = () => {
@@ -40,9 +49,72 @@ export default function OnboardingPage() {
     }
   }
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+
+      const audioChunks: BlobPart[] = []
+      
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data)
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
+        setAudioBlob(audioBlob)
+        const url = URL.createObjectURL(audioBlob)
+        setAudioUrl(url)
+        stream.getTracks().forEach(track => track.stop())
+        toast.success("Recording completed!")
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      toast.info("Recording started...")
+    } catch (error) {
+      toast.error("Could not access microphone. Please check permissions.")
+      console.error('Error accessing microphone:', error)
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }
+
+  const playAudio = () => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play()
+      setIsPlaying(true)
+    }
+  }
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      setIsPlaying(false)
+    }
+  }
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false)
+  }
+
   const handleSubmit = async () => {
     if (!formData.story.trim()) {
       setError("Please tell us your story")
+      toast.error("Please tell us your story")
+      return
+    }
+
+    if (!formData.about.trim()) {
+      setError("Please tell us about yourself")
+      toast.error("Please tell us about yourself")
       return
     }
 
@@ -56,7 +128,8 @@ export default function OnboardingPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          story: formData.story
+          story: formData.story,
+          about: formData.about
         }),
       })
 
@@ -64,9 +137,11 @@ export default function OnboardingPage() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to complete onboarding')
+        toast.error(data.error || 'Failed to complete onboarding')
         return
       }
 
+      toast.success("Profile created successfully!")
       // Move to success step
       setCurrentStep(totalSteps + 1)
       
@@ -76,6 +151,7 @@ export default function OnboardingPage() {
       }, 2000)
     } catch (error) {
       setError("An error occurred. Please try again.")
+      toast.error("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -99,7 +175,7 @@ export default function OnboardingPage() {
             className="text-center"
           >
             <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to ArtisanMarket!</h1>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to KarigarMart!</h1>
             <p className="text-muted-foreground mb-4">Your profile has been created successfully.</p>
             <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
           </motion.div>
@@ -184,8 +260,112 @@ export default function OnboardingPage() {
               </motion.div>
             )}
 
-            {/* Step 3: Story */}
+            {/* Step 3: About */}
             {currentStep === 3 && (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="space-y-4"
+              >
+                <h3 className="text-xl font-semibold text-foreground">
+                  Tell Us About Yourself
+                </h3>
+                <p className="text-muted-foreground">
+                  Share a bit about yourself, your background, and what drives your passion for creating.
+                </p>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="about">About You</Label>
+                    <Textarea
+                      id="about"
+                      value={formData.about}
+                      onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                      placeholder="I am... My background is... I'm passionate about..."
+                      className="min-h-[120px]"
+                      disabled={isLoading}
+                    />
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <Label>Audio Recording (Optional)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      You can also record an audio message to tell your story in your own voice.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      {!isRecording ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={startRecording}
+                          disabled={isLoading}
+                          className="flex items-center gap-2"
+                        >
+                          <Mic size={16} />
+                          Start Recording
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          onClick={stopRecording}
+                          disabled={isLoading}
+                          className="flex items-center gap-2"
+                        >
+                          <Square size={16} />
+                          Stop Recording
+                        </Button>
+                      )}
+                      
+                      {audioUrl && (
+                        <div className="flex items-center gap-2">
+                          {!isPlaying ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={playAudio}
+                              disabled={isLoading}
+                              className="flex items-center gap-2"
+                            >
+                              <Play size={14} />
+                              Play
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={stopAudio}
+                              disabled={isLoading}
+                              className="flex items-center gap-2"
+                            >
+                              <Square size={14} />
+                              Stop
+                            </Button>
+                          )}
+                          <span className="text-sm text-muted-foreground">
+                            {isRecording ? "Recording..." : "Audio recorded"}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {audioUrl && (
+                      <audio
+                        ref={audioRef}
+                        src={audioUrl}
+                        onEnded={handleAudioEnded}
+                        className="hidden"
+                      />
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Step 4: Story */}
+            {currentStep === 4 && (
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}

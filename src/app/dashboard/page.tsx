@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
 import { Plus, Package, DollarSign, Eye, ArrowLeft } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -85,9 +86,11 @@ export default function DashboardPage() {
       setSelectedFile(null)
       setImagePreview(null)
       setIsUploading(false)
+      toast.success("Product created successfully!")
     },
     onError: (error: Error) => {
       setError(error.message)
+      toast.error(error.message)
     }
   })
 
@@ -205,7 +208,7 @@ export default function DashboardPage() {
               </Button>
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground">Artisan Dashboard</h1>
-                <p className="text-sm sm:text-base text-muted-foreground">Welcome back, {session.user.name}</p>
+                <p className="text-sm sm:text-base text-muted-foreground">Welcome back, {session?.user.name}</p>
               </div>
             </div>
             
@@ -393,7 +396,7 @@ export default function DashboardPage() {
             </div>
           ) : fetchError ? (
             <div className="text-center py-8">
-              <div className="text-red-500">Error loading products</div>
+              <div className="text-red-500">Error loading products. Please try again.</div>
             </div>
           ) : products.length === 0 ? (
             <div className="text-center py-8 sm:py-12 px-4">

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'artisanmarket-v1'
+const CACHE_NAME = 'KarigarMart-v1'
 const urlsToCache = [
   '/',
   '/static/js/bundle.js',

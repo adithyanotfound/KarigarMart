@@ -9,6 +9,7 @@ import { EthereumFix } from "@/components/ethereum-fix";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Script from "next/script";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,13 +22,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ArtisanMarket - Discover Unique Products",
+  title: "KarigarMart - Discover Unique Products",
   description: "A social marketplace for discovering and purchasing unique artisan products through short-form video content.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "ArtisanMarket",
+    title: "KarigarMart",
   },
   icons: {
     icon: "/icon-192x192.png",
@@ -68,6 +69,7 @@ export default async function RootLayout({
               <EthereumFix />
               {children}
               <PWAPrompt />
+              <Toaster richColors position="top-right" />
             </VideoSettingsProvider>
           </AuthSessionProvider>
         </QueryProvider>

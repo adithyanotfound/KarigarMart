@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { ArrowLeft, ShoppingCart, Heart, Plus, Minus } from "lucide-react"
+import { toast } from "sonner"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -74,8 +75,10 @@ export default function ProductPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
-      // Show success feedback
-      alert('Added to cart!')
+      toast.success("Added to cart!")
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to add to cart")
     },
   })
 

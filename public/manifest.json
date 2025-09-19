@@ -1,6 +1,6 @@
 {
-  "name": "ArtisanMarket - Discover Unique Products",
-  "short_name": "ArtisanMarket",
+  "name": "KarigarMart - Discover Unique Products",
+  "short_name": "KarigarMart",
   "description": "A social marketplace for discovering and purchasing unique artisan products through short-form video content.",
   "start_url": "/",
   "display": "standalone",

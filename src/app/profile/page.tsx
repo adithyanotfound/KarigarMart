@@ -135,7 +135,7 @@ export default function ProfilePage() {
             {/* App Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">About ArtisanMarket</CardTitle>
+                <CardTitle className="text-lg">About KarigarMart</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">

@@ -59,7 +59,7 @@ export function PWAPrompt() {
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">Install ArtisanMarket</h3>
+                  <h3 className="font-semibold text-foreground mb-1">Install KarigarMart</h3>
                   <p className="text-sm text-muted-foreground mb-3">
                     Get the full app experience with offline access and notifications.
                   </p>

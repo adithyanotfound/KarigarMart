@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,12 +36,14 @@ export default function SignUpPage() {
     // Validation
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match")
+      toast.error("Passwords do not match")
       setIsLoading(false)
       return
     }
 
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters long")
+      toast.error("Password must be at least 6 characters long")
       setIsLoading(false)
       return
     }
@@ -64,6 +67,7 @@ export default function SignUpPage() {
 
       if (!response.ok) {
         setError(data.error || 'Failed to create account')
+        toast.error(data.error || 'Failed to create account')
         return
       }
 
@@ -76,7 +80,9 @@ export default function SignUpPage() {
 
       if (signInResult?.error) {
         setError("Account created but failed to sign in. Please try signing in manually.")
+        toast.error("Account created but failed to sign in. Please try signing in manually.")
       } else {
+        toast.success("Account created successfully!")
         // Redirect based on role
         if (formData.role === 'ARTISAN') {
           router.push('/onboarding')
@@ -86,6 +92,7 @@ export default function SignUpPage() {
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
+      toast.error("An error occurred. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -101,7 +108,7 @@ export default function SignUpPage() {
         >
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Join ArtisanMarket</CardTitle>
+            <CardTitle className="text-2xl font-bold">Join KarigarMart</CardTitle>
             <CardDescription>
               Create your account to start discovering amazing products
             </CardDescription>

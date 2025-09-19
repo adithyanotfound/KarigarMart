@@ -6,6 +6,7 @@ import { VideoPlayer } from "./video-player"
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { toast } from "sonner"
 
 interface Product {
   id: string
@@ -90,6 +91,10 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+      toast.success("Added to cart!")
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to add to cart")
     },
   })
 

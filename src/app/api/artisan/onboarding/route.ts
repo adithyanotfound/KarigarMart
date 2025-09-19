@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { story } = await request.json()
+    const { story, about } = await request.json()
 
     if (!story) {
       return NextResponse.json(
@@ -40,11 +40,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!about) {
+      return NextResponse.json(
+        { error: 'About section is required' },
+        { status: 400 }
+      )
+    }
+
     // Create artisan profile
     const artisanProfile = await prisma.artisanProfile.create({
       data: {
         userId: session.user.id,
-        story
+        story,
+        about
       },
       include: {
         user: {

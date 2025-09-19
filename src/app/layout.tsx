@@ -6,8 +6,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 import { VideoSettingsProvider } from "@/components/providers/video-settings-provider";
 import { PWAPrompt } from "@/components/pwa-prompt";
 import { EthereumFix } from "@/components/ethereum-fix";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+// Removed getServerSession to prevent dynamic server usage
 import Script from "next/script";
 import { Toaster } from "sonner";
 
@@ -44,27 +43,18 @@ export const viewport: Viewport = {
   themeColor: "#404040",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  let session = null;
-  
-  try {
-    session = await getServerSession(authOptions);
-  } catch (error) {
-    // Handle JWT session errors gracefully
-    console.warn('Session error:', error);
-  }
-
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          <AuthSessionProvider session={session}>
+          <AuthSessionProvider>
             <VideoSettingsProvider>
               <EthereumFix />
               {children}

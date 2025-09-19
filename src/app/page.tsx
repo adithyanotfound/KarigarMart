@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-
-export const dynamic = 'force-dynamic'
 import { VideoFeed } from "@/components/video-feed"
 import { Navigation } from "@/components/navigation"
 import { AuthGuard } from "@/components/auth-guard"

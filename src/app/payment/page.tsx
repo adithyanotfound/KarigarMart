@@ -1,8 +1,6 @@
 "use client"
 
 import { useState, Suspense } from "react"
-
-export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, CreditCard, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"

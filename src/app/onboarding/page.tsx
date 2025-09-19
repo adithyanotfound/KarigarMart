@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { ArrowRight, CheckCircle, Mic, MicOff, Play, Square } from "lucide-react"
+import { ArrowRight, CheckCircle, Mic, MicOff, Play, Square, Trash2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { AuthGuard } from "@/components/auth-guard"
+import { useQuery } from "@tanstack/react-query"
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession()
@@ -31,11 +32,32 @@ export default function OnboardingPage() {
   const [isPlaying, setIsPlaying] = useState(false)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [recordingDuration, setRecordingDuration] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const recordingStartTime = useRef<number | null>(null)
 
   const totalSteps = 4
 
+  // Check if artisan has already completed onboarding
+  const { data: onboardingStatus } = useQuery({
+    queryKey: ['artisan-onboarding-status'],
+    queryFn: async () => {
+      const response = await fetch('/api/artisan/onboarding/status')
+      if (!response.ok) {
+        throw new Error('Failed to check onboarding status')
+      }
+      return response.json()
+    },
+    enabled: !!session && session.user.role === 'ARTISAN',
+  })
+
+  // Redirect if already completed onboarding
+  useEffect(() => {
+    if (session?.user.role === 'ARTISAN' && onboardingStatus?.hasCompletedOnboarding) {
+      router.push('/dashboard')
+    }
+  }, [session, onboardingStatus, router])
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -72,6 +94,8 @@ export default function OnboardingPage() {
 
       mediaRecorder.start()
       setIsRecording(true)
+      recordingStartTime.current = Date.now()
+      setRecordingDuration(0)
       toast.info("Recording started...")
     } catch (error) {
       toast.error("Could not access microphone. Please check permissions.")
@@ -83,6 +107,10 @@ export default function OnboardingPage() {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
+      if (recordingStartTime.current) {
+        const duration = Math.round((Date.now() - recordingStartTime.current) / 1000)
+        setRecordingDuration(duration)
+      }
     }
   }
 
@@ -105,6 +133,60 @@ export default function OnboardingPage() {
     setIsPlaying(false)
   }
 
+  const deleteAudio = () => {
+    setAudioBlob(null)
+    setAudioUrl(null)
+    setRecordingDuration(0)
+    setIsPlaying(false)
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    toast.success("Audio recording deleted")
+  }
+
+  const reRecordAudio = () => {
+    deleteAudio() // Clear current audio
+    // The user can then start recording again
+    toast.info("Ready to record again. Click 'Start Recording' when ready.")
+  }
+
+  const processAudioToText = async (audioBlob: Blob): Promise<string> => {
+    const formData = new FormData()
+    formData.append('audio', audioBlob, 'recording.wav')
+
+    const response = await fetch('/api/tts', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to transcribe audio')
+    }
+
+    const data = await response.json()
+    return data.transcription
+  }
+
+  const generateSummary = async (text: string): Promise<string> => {
+    const response = await fetch('/api/summary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to generate summary')
+    }
+
+    const data = await response.json()
+    return data.summary
+  }
+
   const handleSubmit = async () => {
     if (!formData.story.trim()) {
       setError("Please tell us your story")
@@ -112,9 +194,9 @@ export default function OnboardingPage() {
       return
     }
 
-    if (!formData.about.trim()) {
-      setError("Please tell us about yourself")
-      toast.error("Please tell us about yourself")
+    if (!formData.about.trim() && !audioBlob) {
+      setError("Please tell us about yourself or record an audio message")
+      toast.error("Please tell us about yourself or record an audio message")
       return
     }
 
@@ -122,6 +204,50 @@ export default function OnboardingPage() {
     setError("")
 
     try {
+      let finalAbout = formData.about
+
+      // If audio is recorded, process it (audio takes priority over text input)
+      if (audioBlob) {
+        toast.info("Processing audio...")
+        try {
+          const transcription = await processAudioToText(audioBlob)
+          if (transcription.trim()) {
+            // Use audio transcription as the about text
+            finalAbout = transcription
+            toast.success("Audio transcribed successfully!")
+          } else {
+            // If transcription is empty, fall back to text input
+            if (formData.about.trim()) {
+              finalAbout = formData.about
+              toast.info("No speech detected in audio. Using text input.")
+            }
+          }
+        } catch (audioError) {
+          console.error('Audio processing error:', audioError)
+          toast.error("Failed to process audio. Using text input instead.")
+          // Continue with text input if audio processing fails
+          if (formData.about.trim()) {
+            finalAbout = formData.about
+          }
+        }
+      }
+
+      // If we have text (either from input or audio), generate summary
+      if (finalAbout.trim()) {
+        try {
+          toast.info("Generating professional summary...")
+          const summary = await generateSummary(finalAbout)
+          if (summary.trim()) {
+            finalAbout = summary
+            toast.success("Professional summary generated!")
+          }
+        } catch (summaryError) {
+          console.error('Summary generation error:', summaryError)
+          toast.error("Failed to generate summary. Using original text.")
+          // Continue with original text if summary generation fails
+        }
+      }
+
       const response = await fetch('/api/artisan/onboarding', {
         method: 'POST',
         headers: {
@@ -129,7 +255,7 @@ export default function OnboardingPage() {
         },
         body: JSON.stringify({
           story: formData.story,
-          about: formData.about
+          about: finalAbout
         }),
       })
 
@@ -163,6 +289,20 @@ export default function OnboardingPage() {
   if (session && session.user.role !== 'ARTISAN') {
     router.push('/')
     return null
+  }
+
+  // Show loading while checking onboarding status
+  if (session?.user.role === 'ARTISAN' && onboardingStatus === undefined) {
+    return (
+      <AuthGuard requireAuth={true}>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-foreground mb-2">Loading...</div>
+            <div className="text-sm text-muted-foreground">Checking your profile status</div>
+          </div>
+        </div>
+      </AuthGuard>
+    )
   }
 
   if (currentStep > totalSteps) {
@@ -273,80 +413,105 @@ export default function OnboardingPage() {
                 <p className="text-muted-foreground">
                   Share a bit about yourself, your background, and what drives your passion for creating.
                 </p>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="about">About You</Label>
-                    <Textarea
-                      id="about"
-                      value={formData.about}
-                      onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                      placeholder="I am... My background is... I&apos;m passionate about..."
-                      className="min-h-[120px]"
-                      disabled={isLoading}
-                    />
-                  </div>
-                  
+                <div className="space-y-4">              
                   <div className="space-y-3">
-                    <Label>Audio Recording (Optional)</Label>
+                    <Label>Audio Recording (Recommended)</Label>
                     <p className="text-sm text-muted-foreground">
-                      You can also record an audio message to tell your story in your own voice.
+                      Record an audio message to tell your story in your own voice. This will be automatically transcribed and professionally rephrased.
                     </p>
                     
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      {!isRecording ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={startRecording}
-                          disabled={isLoading}
-                          className="flex items-center gap-2"
-                        >
-                          <Mic size={16} />
-                          Start Recording
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          onClick={stopRecording}
-                          disabled={isLoading}
-                          className="flex items-center gap-2"
-                        >
-                          <Square size={16} />
-                          Stop Recording
-                        </Button>
-                      )}
-                      
+                    <div className="space-y-3">
+                      {/* Recording Controls */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        {!isRecording ? (
+                          <Button
+                            type="button"
+                            variant={audioBlob ? "secondary" : "outline"}
+                            onClick={startRecording}
+                            disabled={isLoading}
+                            className={`flex items-center gap-2 ${audioBlob ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}`}
+                          >
+                            <Mic size={16} />
+                            {audioBlob ? "Record Again" : "Start Recording"}
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={stopRecording}
+                            disabled={isLoading}
+                            className="flex items-center gap-2"
+                          >
+                            <Square size={16} />
+                            Stop Recording
+                          </Button>
+                        )}
+                        
+                        {audioUrl && (
+                          <div className="flex items-center gap-2">
+                            {!isPlaying ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={playAudio}
+                                disabled={isLoading}
+                                className="flex items-center gap-2"
+                              >
+                                <Play size={14} />
+                                Play
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={stopAudio}
+                                disabled={isLoading}
+                                className="flex items-center gap-2"
+                              >
+                                <Square size={14} />
+                                Stop
+                              </Button>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                              {isRecording ? "Recording..." : `Audio recorded (${recordingDuration}s)`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Audio Management Controls */}
                       {audioUrl && (
-                        <div className="flex items-center gap-2">
-                          {!isPlaying ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                            <CheckCircle size={16} />
+                            <span>Audio recording completed ({recordingDuration}s)</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={playAudio}
-                              disabled={isLoading}
-                              className="flex items-center gap-2"
+                              onClick={reRecordAudio}
+                              disabled={isLoading || isRecording}
+                              className="flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
                             >
-                              <Play size={14} />
-                              Play
+                              <RotateCcw size={14} />
+                              Re-record
                             </Button>
-                          ) : (
                             <Button
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={stopAudio}
-                              disabled={isLoading}
-                              className="flex items-center gap-2"
+                              onClick={deleteAudio}
+                              disabled={isLoading || isRecording}
+                              className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
                             >
-                              <Square size={14} />
-                              Stop
+                              <Trash2 size={14} />
+                              Delete
                             </Button>
-                          )}
-                          <span className="text-sm text-muted-foreground">
-                            {isRecording ? "Recording..." : "Audio recorded"}
-                          </span>
+                          </div>
                         </div>
                       )}
                     </div>
@@ -359,6 +524,21 @@ export default function OnboardingPage() {
                         className="hidden"
                       />
                     )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="about">Or Type Your Story (Alternative)</Label>
+                    <Textarea
+                      id="about"
+                      value={formData.about}
+                      onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                      placeholder="I am... My background is... I&apos;m passionate about..."
+                      className="min-h-[120px]"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {audioBlob ? "Audio recording will be used instead of this text. You can delete the audio above to use this text instead." : "This text will be professionally rephrased before saving."}
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -417,9 +597,9 @@ export default function OnboardingPage() {
                 <Button
                   onClick={handleSubmit}
                   className="bg-black hover:bg-gray-800"
-                  disabled={isLoading || !formData.story.trim()}
+                  disabled={isLoading || !formData.story.trim() || (!formData.about.trim() && !audioBlob)}
                 >
-                  {isLoading ? "Creating Profile..." : "Complete Setup"}
+                  {isLoading ? "Processing..." : "Complete Setup"}
                 </Button>
               )}
             </div>

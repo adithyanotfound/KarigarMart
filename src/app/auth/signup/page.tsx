@@ -85,7 +85,7 @@ export default function SignUpPage() {
         toast.success("Account created successfully!")
         // Redirect based on role
         if (formData.role === 'ARTISAN') {
-          router.push('/onboarding')
+          router.push('/dashboard') // The ArtisanOnboardingGuard will handle the redirect
         } else {
           router.push('/')
         }

@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AuthGuard } from "@/components/auth-guard"
+import { ArtisanOnboardingGuard } from "@/components/artisan-onboarding-guard"
 import Image from "next/image"
 
 interface Product {
@@ -190,7 +191,8 @@ export default function DashboardPage() {
 
   return (
     <AuthGuard requireAuth={true}>
-      <div className="min-h-screen bg-background">
+      <ArtisanOnboardingGuard>
+        <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
@@ -459,7 +461,8 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-      </div>
+        </div>
+      </ArtisanOnboardingGuard>
     </AuthGuard>
   )
 }

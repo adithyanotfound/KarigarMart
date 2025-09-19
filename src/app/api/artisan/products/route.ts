@@ -17,9 +17,16 @@ export async function GET() {
       include: { artisanProfile: true }
     })
 
-    if (!user || user.role !== 'ARTISAN' || !user.artisanProfile) {
+    if (!user || user.role !== 'ARTISAN') {
       return NextResponse.json(
-        { error: 'Artisan profile not found' },
+        { error: 'User is not an artisan' },
+        { status: 403 }
+      )
+    }
+
+    if (!user.artisanProfile) {
+      return NextResponse.json(
+        { error: 'Please complete your artisan onboarding first' },
         { status: 403 }
       )
     }
@@ -58,9 +65,16 @@ export async function POST(request: NextRequest) {
       include: { artisanProfile: true }
     })
 
-    if (!user || user.role !== 'ARTISAN' || !user.artisanProfile) {
+    if (!user || user.role !== 'ARTISAN') {
       return NextResponse.json(
-        { error: 'Artisan profile not found' },
+        { error: 'User is not an artisan' },
+        { status: 403 }
+      )
+    }
+
+    if (!user.artisanProfile) {
+      return NextResponse.json(
+        { error: 'Please complete your artisan onboarding first' },
         { status: 403 }
       )
     }

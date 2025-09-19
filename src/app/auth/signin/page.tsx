@@ -42,15 +42,7 @@ export default function SignInPage() {
         const session = await getSession()
         
         if (session?.user?.role === 'ARTISAN') {
-          // Check if artisan has completed profile
-          const response = await fetch('/api/user/profile')
-          const userData = await response.json()
-          
-          if (!userData.artisanProfile) {
-            router.push('/onboarding')
-          } else {
-            router.push('/dashboard')
-          }
+          router.push('/dashboard') // The ArtisanOnboardingGuard will handle the redirect
         } else {
           router.push('/')
         }

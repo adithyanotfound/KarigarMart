@@ -23,6 +23,7 @@ export async function GET() {
     }
 
     // Remove sensitive data
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user
 
     return NextResponse.json(userWithoutPassword)
@@ -67,8 +68,8 @@ export async function PUT(request: NextRequest) {
         where: { id: updatedUser.artisanProfile.id },
         data: {
           story: story || updatedUser.artisanProfile.story,
-          about: about || updatedUser.artisanProfile.about
-        }
+          about: about || ''
+        } as { story: string; about: string }
       })
     }
 
@@ -85,6 +86,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Remove sensitive data
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash, ...userWithoutPassword } = user
 
     return NextResponse.json(userWithoutPassword)

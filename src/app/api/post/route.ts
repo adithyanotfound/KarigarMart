@@ -10,7 +10,7 @@ function addCorsHeaders(response: NextResponse) {
 }
 
 // Handle CORS preflight requests
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

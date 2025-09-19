@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer()
     const audioBuffer = Buffer.from(arrayBuffer)
 
-    // Get the file type
-    const mimeType = audioFile.type || 'audio/wav'
+    // Get the file type (currently unused but may be needed for future enhancements)
+    // const mimeType = audioFile.type || 'audio/wav'
 
     // Use Deepgram for speech-to-text transcription
     const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
@@ -51,8 +51,7 @@ export async function POST(request: NextRequest) {
       transcription: transcript.trim()
     })
   } catch (error) {
-    //@ts-ignore
-    throw new Error(`Transcription failed: ${error.message}`);
+    console.error('Transcription error:', error)
     return NextResponse.json(
       { error: 'Failed to transcribe audio' },
       { status: 500 }

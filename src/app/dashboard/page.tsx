@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AuthGuard } from "@/components/auth-guard"
 import { ArtisanOnboardingGuard } from "@/components/artisan-onboarding-guard"
@@ -36,7 +36,7 @@ async function fetchArtisanProducts() {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
   const queryClient = useQueryClient()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -165,7 +165,7 @@ export default function DashboardPage() {
       }
 
       createProductMutation.mutate(formData)
-    } catch (error) {
+    } catch {
       setError("Failed to upload image. Please try again.")
     } finally {
       setIsUploading(false)
@@ -293,10 +293,11 @@ export default function DashboardPage() {
                     {imagePreview && (
                       <div className="mt-3">
                         <div className="relative w-full h-32 sm:h-40 bg-gray-100 rounded-lg overflow-hidden">
-                          <img
+                          <Image
                             src={imagePreview}
                             alt="Preview"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
                           />
                           <button
                             type="button"

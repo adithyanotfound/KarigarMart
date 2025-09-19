@@ -7,7 +7,7 @@ export function EthereumFix() {
     // Prevent ethereum-related errors by creating a protective wrapper
     if (typeof window !== 'undefined') {
       // Protect against ethereum access errors
-      const originalEthereum = (window as any).ethereum
+      const originalEthereum = (window as { ethereum?: unknown }).ethereum
 
       if (originalEthereum) {
         // Create a proxy to prevent selectedAddress assignment errors
@@ -37,7 +37,7 @@ export function EthereumFix() {
       // Also prevent any potential errors from other wallet extensions
       const preventWalletErrors = () => {
         try {
-          const ethereum = (window as any).ethereum
+          const ethereum = (window as { ethereum?: unknown }).ethereum
           if (ethereum && typeof ethereum.selectedAddress === 'undefined') {
             // Don't set to undefined, leave it as is
             return

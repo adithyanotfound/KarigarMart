@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion } from "framer-motion"
-import { ArrowRight, CheckCircle, Mic, MicOff, Play, Square, Trash2, RotateCcw } from "lucide-react"
+import { ArrowRight, CheckCircle, Mic, Play, Square, Trash2, RotateCcw } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +16,7 @@ import { AuthGuard } from "@/components/auth-guard"
 import { useQuery } from "@tanstack/react-query"
 
 export default function OnboardingPage() {
-  const { data: session, status } = useSession()
+  const { data: session } = useSession()
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
@@ -409,7 +409,7 @@ export default function OnboardingPage() {
       setTimeout(() => {
         router.push('/dashboard')
       }, 2000)
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.")
       toast.error("An error occurred. Please try again.")
     } finally {

@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
 import { ArrowLeft, CreditCard, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -14,7 +13,6 @@ import { AuthGuard } from "@/components/auth-guard"
 export default function PaymentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session, status } = useSession()
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 

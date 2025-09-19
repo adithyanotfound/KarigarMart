@@ -1,6 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
+
+export const dynamic = 'force-dynamic'
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, CreditCard, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
@@ -10,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthGuard } from "@/components/auth-guard"
 
-export default function PaymentPage() {
+function PaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -196,5 +198,13 @@ export default function PaymentPage() {
       </div>
       </div>
     </AuthGuard>
+  )
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentContent />
+    </Suspense>
   )
 }

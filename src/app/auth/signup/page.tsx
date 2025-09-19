@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+
+export const dynamic = 'force-dynamic'
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"

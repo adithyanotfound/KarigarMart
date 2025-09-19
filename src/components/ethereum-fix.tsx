@@ -38,9 +38,12 @@ export function EthereumFix() {
       const preventWalletErrors = () => {
         try {
           const ethereum = (window as { ethereum?: unknown }).ethereum
-          if (ethereum && typeof ethereum.selectedAddress === 'undefined') {
-            // Don't set to undefined, leave it as is
-            return
+          if (ethereum && typeof ethereum === 'object' && ethereum !== null && 'selectedAddress' in ethereum) {
+            const ethereumWithAddress = ethereum as { selectedAddress?: unknown }
+            if (typeof ethereumWithAddress.selectedAddress === 'undefined') {
+              // Don't set to undefined, leave it as is
+              return
+            }
           }
         } catch (error) {
           // Silently handle any ethereum access errors

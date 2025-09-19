@@ -26,11 +26,11 @@ interface CartData {
 }
 
 // Debounce utility
-function useDebounce<T extends (...args: unknown[]) => unknown>(
+function useDebounce<T extends (...args: any[]) => any>(
   callback: T,
   delay: number
 ): T {
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   return useCallback((...args: Parameters<T>) => {
     if (timeoutRef.current) {

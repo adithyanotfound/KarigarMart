@@ -15,7 +15,8 @@ async function main() {
       role: 'ARTISAN',
       artisanProfile: {
         create: {
-          story: 'I\'ve been crafting handmade jewelry for over 15 years, inspired by my grandmother\'s traditional techniques from Mexico. Each piece tells a story of heritage and modern creativity.'
+          story: 'I\'ve been crafting handmade jewelry for over 15 years, inspired by my grandmother\'s traditional techniques from Mexico. Each piece tells a story of heritage and modern creativity.',
+          about: 'Maria is a passionate jewelry designer who combines traditional Mexican techniques with contemporary design. She specializes in sterling silver pieces that celebrate her cultural heritage while appealing to modern tastes.'
         }
       }
     },
@@ -32,7 +33,8 @@ async function main() {
       role: 'ARTISAN',
       artisanProfile: {
         create: {
-          story: 'After a career in tech, I discovered my passion for woodworking. I create unique furniture pieces using sustainable materials and traditional joinery techniques.'
+          story: 'After a career in tech, I discovered my passion for woodworking. I create unique furniture pieces using sustainable materials and traditional joinery techniques.',
+          about: 'James is a former software engineer who found his true calling in woodworking. He creates sustainable furniture using reclaimed materials and traditional joinery techniques, blending modern functionality with timeless craftsmanship.'
         }
       }
     },
@@ -49,7 +51,8 @@ async function main() {
       role: 'ARTISAN',
       artisanProfile: {
         create: {
-          story: 'Growing up in France, I learned the art of pottery from my mother. My ceramics blend contemporary design with timeless French traditions.'
+          story: 'Growing up in France, I learned the art of pottery from my mother. My ceramics blend contemporary design with timeless French traditions.',
+          about: 'Sophie is a ceramic artist who brings French elegance to functional pottery. Her work combines traditional techniques passed down through generations with contemporary design sensibilities, creating pieces that are both beautiful and practical.'
         }
       }
     },

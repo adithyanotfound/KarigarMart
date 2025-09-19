@@ -102,11 +102,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
 
     // Always snap back to center with smooth animation
     y.stop()
-    y.set(0, {
-      type: "spring",
-      stiffness: 400,
-      damping: 30
-    } as const)
+    y.set(0)
   }
 
   useEffect(() => {

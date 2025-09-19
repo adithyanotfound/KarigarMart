@@ -1,6 +1,8 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+
+export const dynamic = 'force-dynamic'
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
 import { useCart } from "@/hooks/use-cart"
 import { motion } from "framer-motion"

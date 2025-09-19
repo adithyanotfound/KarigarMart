@@ -1,0 +1,77 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ARTISAN
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  
+  // Relations
+  artisanProfile ArtisanProfile?
+  cartItems      CartItem[]
+  
+  @@map("users")
+}
+
+model ArtisanProfile {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @db.Uuid
+  story  String @db.Text
+  
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products Product[]
+  
+  @@map("artisan_profiles")
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  artisanId   String   @db.Uuid
+  title       String
+  description String   @db.Text
+  price       Decimal  @db.Decimal(10, 2)
+  imageUrl    String
+  videoUrl    String
+  publishDate DateTime @default(now())
+  
+  // Relations
+  artisan   ArtisanProfile @relation(fields: [artisanId], references: [id], onDelete: Cascade)
+  cartItems CartItem[]
+  
+  @@map("products")
+}
+
+model CartItem {
+  id        String @id @default(uuid()) @db.Uuid
+  userId    String @db.Uuid
+  productId String @db.Uuid
+  quantity  Int    @default(1)
+  
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, productId])
+  @@map("cart_items")
+}

@@ -1,0 +1,53 @@
+{
+  "name": "ArtisanMarket - Discover Unique Products",
+  "short_name": "ArtisanMarket",
+  "description": "A social marketplace for discovering and purchasing unique artisan products through short-form video content.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1f1e1d",
+  "theme_color": "#d97757",
+  "orientation": "portrait",
+  "categories": ["shopping", "social", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Products",
+      "short_name": "Browse",
+      "description": "Browse the video feed of products",
+      "url": "/",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Shopping Cart",
+      "short_name": "Cart",
+      "description": "View your shopping cart",
+      "url": "/cart",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}

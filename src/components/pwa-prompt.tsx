@@ -55,7 +55,7 @@ export function PWAPrompt() {
           exit={{ y: 100, opacity: 0 }}
           className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-80"
         >
-          <Card className="bg-background border-orange">
+          <Card className="bg-background border-gray-300">
             <CardContent className="p-4">
               <div className="flex items-start gap-3">
                 <div className="flex-1">
@@ -67,7 +67,7 @@ export function PWAPrompt() {
                     <Button 
                       size="sm" 
                       onClick={handleInstall}
-                      className="bg-orange hover:bg-orange/90"
+                      className="bg-black hover:bg-gray-800"
                     >
                       <Download size={14} className="mr-1" />
                       Install

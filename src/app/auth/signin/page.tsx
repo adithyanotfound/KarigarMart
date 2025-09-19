@@ -126,7 +126,7 @@ export default function SignInPage() {
 
               <Button 
                 type="submit" 
-                className="w-full bg-orange hover:bg-orange/90" 
+                className="w-full bg-black hover:bg-gray-800" 
                 disabled={isLoading}
               >
                 {isLoading ? "Signing in..." : "Sign In"}
@@ -138,7 +138,7 @@ export default function SignInPage() {
                 Don't have an account?{" "}
                 <Link 
                   href="/auth/signup" 
-                  className="text-orange hover:text-orange/90 font-medium"
+                  className="text-gray-600 hover:text-black font-medium"
                 >
                   Sign up
                 </Link>

@@ -85,7 +85,7 @@ export default function PaymentPage() {
           <CardContent>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Total Amount:</span>
-              <span className="text-2xl font-bold text-orange">${total}</span>
+              <span className="text-2xl font-bold text-black">${total}</span>
             </div>
           </CardContent>
         </Card>
@@ -176,7 +176,7 @@ export default function PaymentPage() {
 
         {/* Payment Button */}
         <Button
-          className="w-full bg-orange hover:bg-orange/90 text-white font-semibold py-3"
+          className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3"
           onClick={handlePayment}
           disabled={isProcessing}
         >

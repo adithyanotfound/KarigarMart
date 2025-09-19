@@ -137,7 +137,7 @@ export default function DashboardPage() {
             
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-orange hover:bg-orange/90">
+                <Button className="bg-black hover:bg-gray-800">
                   <Plus size={16} className="mr-2" />
                   Add Product
                 </Button>
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                     </Button>
                     <Button
                       type="submit"
-                      className="flex-1 bg-orange hover:bg-orange/90"
+                      className="flex-1 bg-black hover:bg-gray-800"
                       disabled={createProductMutation.isPending}
                     >
                       {createProductMutation.isPending ? "Creating..." : "Create Product"}
@@ -294,7 +294,7 @@ export default function DashboardPage() {
               <p className="text-muted-foreground mb-4">Create your first product to start showcasing your work!</p>
               <Button 
                 onClick={() => setIsDialogOpen(true)}
-                className="bg-orange hover:bg-orange/90"
+                className="bg-black hover:bg-gray-800"
               >
                 <Plus size={16} className="mr-2" />
                 Add Your First Product
@@ -326,7 +326,7 @@ export default function DashboardPage() {
                       <h3 className="font-semibold text-foreground mb-1 truncate">{product.title}</h3>
                       <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-orange">${product.price}</span>
+                        <span className="text-lg font-bold text-black">${product.price}</span>
                         <Button
                           size="sm"
                           variant="outline"

@@ -139,7 +139,7 @@ export default function OnboardingPage() {
                 className="text-center space-y-4"
               >
                 <h3 className="text-xl font-semibold text-foreground">
-                  Welcome, {session.user.name}!
+                  Welcome, {session?.user.name}!
                 </h3>
                 <p className="text-muted-foreground">
                   We're excited to have you join our community of talented artisans. Let's set up your profile so customers can discover your amazing work.
@@ -227,7 +227,7 @@ export default function OnboardingPage() {
               {currentStep < totalSteps ? (
                 <Button
                   onClick={handleNext}
-                  className="bg-orange hover:bg-orange/90"
+                  className="bg-black hover:bg-gray-800"
                   disabled={isLoading}
                 >
                   Next
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  className="bg-orange hover:bg-orange/90"
+                  className="bg-black hover:bg-gray-800"
                   disabled={isLoading || !formData.story.trim()}
                 >
                   {isLoading ? "Creating Profile..." : "Complete Setup"}

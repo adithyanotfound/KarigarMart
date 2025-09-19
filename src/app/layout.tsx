@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { VideoSettingsProvider } from "@/components/providers/video-settings-provider";
 import { PWAPrompt } from "@/components/pwa-prompt";
 import { EthereumFix } from "@/components/ethereum-fix";
 import { getServerSession } from "next-auth";
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#d97757",
+  themeColor: "#404040",
 };
 
 export default async function RootLayout({
@@ -63,9 +64,11 @@ export default async function RootLayout({
       >
         <QueryProvider>
           <AuthSessionProvider session={session}>
-            <EthereumFix />
-            {children}
-            <PWAPrompt />
+            <VideoSettingsProvider>
+              <EthereumFix />
+              {children}
+              <PWAPrompt />
+            </VideoSettingsProvider>
           </AuthSessionProvider>
         </QueryProvider>
         <Script id="sw-register" strategy="afterInteractive">

@@ -167,7 +167,7 @@ export default function CartPage() {
                         <p className="text-sm text-muted-foreground">
                           by {item.product.artisan.user.name}
                         </p>
-                        <p className="text-lg font-semibold text-orange mt-1">
+                        <p className="text-lg font-semibold text-black mt-1">
                           ${item.product.price}
                         </p>
                       </div>
@@ -235,7 +235,7 @@ export default function CartPage() {
             <ShoppingBag size={64} className="text-muted-foreground mb-4" />
             <h2 className="text-xl font-semibold text-foreground mb-2">Your cart is empty</h2>
             <p className="text-muted-foreground mb-6">Start adding some amazing products!</p>
-            <Button onClick={() => router.push('/')} className="bg-orange hover:bg-orange/90">
+            <Button onClick={() => router.push('/')} className="bg-black hover:bg-gray-800">
               Browse Products
             </Button>
           </div>
@@ -249,14 +249,14 @@ export default function CartPage() {
             {/* Total */}
             <div className="flex justify-between items-center">
               <span className="text-lg font-semibold text-foreground">Total:</span>
-              <span className="text-2xl font-bold text-orange">
+              <span className="text-2xl font-bold text-black">
                 ${cart.total.toFixed(2)}
               </span>
             </div>
 
             {/* Checkout Button */}
             <Button
-              className="w-full bg-orange hover:bg-orange/90 text-white font-semibold py-3"
+              className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3"
               onClick={handleCheckout}
             >
               Proceed to Checkout

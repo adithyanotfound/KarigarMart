@@ -35,9 +35,14 @@ async function fetchProducts({ pageParam }: { pageParam?: string }) {
   return response.json()
 }
 
-export function VideoFeed() {
+interface VideoFeedProps {
+  onPauseChange?: (isPaused: boolean) => void
+}
+
+export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
+  const [currentVideoPaused, setCurrentVideoPaused] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { data: session } = useSession()
@@ -101,34 +106,51 @@ export function VideoFeed() {
   })
 
   const handlePanEnd = (event: any, info: PanInfo) => {
-    const threshold = 100
+    const threshold = 50 // Reduced threshold for more responsive swiping
     const velocity = info.velocity.y
+    const velocityThreshold = 300 // Reduced velocity threshold
+    
+    let shouldChange = false
 
-    if (info.offset.y > threshold || velocity > 500) {
+    if (info.offset.y > threshold || velocity > velocityThreshold) {
       // Swipe down - previous video
       if (currentIndex > 0) {
         setCurrentIndex(currentIndex - 1)
         setDirection(-1)
+        shouldChange = true
       }
-    } else if (info.offset.y < -threshold || velocity < -500) {
+    } else if (info.offset.y < -threshold || velocity < -velocityThreshold) {
       // Swipe up - next video
       if (currentIndex < products.length - 1) {
         setCurrentIndex(currentIndex + 1)
         setDirection(1)
+        shouldChange = true
         
         // Always fetch more content to ensure infinite scroll
         if (currentIndex >= products.length - 3 && !isFetchingNextPage) {
           fetchNextPage()
         }
       }
-    } else if (info.offset.x > threshold || info.velocity.x > 500) {
+    } else if (info.offset.x > threshold || info.velocity.x > velocityThreshold) {
       // Swipe right - go to product page
       if (products[currentIndex]) {
         router.push(`/product/${products[currentIndex].id}`)
       }
+      shouldChange = true
     }
 
-    y.set(0)
+    // Snap back to center with animation
+    if (!shouldChange) {
+      // Add a subtle spring animation when snapping back
+      y.stop()
+      y.set(0, {
+        type: "spring",
+        stiffness: 500,
+        damping: 30
+      } as any)
+    } else {
+      y.set(0)
+    }
   }
 
   useEffect(() => {
@@ -145,6 +167,11 @@ export function VideoFeed() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [currentIndex, products.length])
+
+  // Notify parent when current video pause state changes
+  useEffect(() => {
+    onPauseChange?.(currentVideoPaused)
+  }, [currentVideoPaused, onPauseChange])
 
   if (isLoading) {
     return (
@@ -176,13 +203,19 @@ export function VideoFeed() {
         className="absolute inset-0"
         style={{ y, opacity }}
         drag="y"
-        dragConstraints={{ top: -50, bottom: 50 }}
-        dragElastic={0.1}
+        dragConstraints={{ top: -100, bottom: 100 }}
+        dragElastic={0.2}
+        dragMomentum={false}
         onPanEnd={handlePanEnd}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 40
+        }}
       >
         {products.map((product, index) => (
           <motion.div
-            key={product.id}
+            key={`${product.id}-${index}`}
             className="absolute inset-0"
             initial={{
               y: index === 0 ? 0 : direction > 0 ? "100%" : "-100%",
@@ -195,8 +228,9 @@ export function VideoFeed() {
             }}
             transition={{
               type: "spring",
-              stiffness: 300,
-              damping: 30
+              stiffness: 400,
+              damping: 35,
+              mass: 1
             }}
           >
             {Math.abs(index - currentIndex) <= 1 && (
@@ -205,6 +239,7 @@ export function VideoFeed() {
                 isActive={index === currentIndex}
                 onAddToCart={(productId) => addToCartMutation.mutate(productId)}
                 onLike={(productId) => likeMutation.mutate(productId)}
+                onPauseChange={index === currentIndex ? setCurrentVideoPaused : undefined}
               />
             )}
           </motion.div>

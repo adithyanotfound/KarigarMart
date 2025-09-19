@@ -71,14 +71,14 @@ export default function ProfilePage() {
             {/* Profile Card */}
             <Card>
               <CardHeader className="text-center">
-                <div className="w-20 h-20 bg-orange rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mx-auto mb-4">
                   <User size={32} className="text-white" />
                 </div>
                 <CardTitle className="text-xl">{profile?.name}</CardTitle>
                 <CardDescription className="flex items-center justify-center gap-2">
                   <Badge 
                     variant={profile?.role === 'ARTISAN' ? 'default' : 'secondary'}
-                    className={profile?.role === 'ARTISAN' ? 'bg-orange text-white' : ''}
+                    className={profile?.role === 'ARTISAN' ? 'bg-black text-white' : ''}
                   >
                     {profile?.role === 'ARTISAN' ? 'Artisan' : 'Customer'}
                   </Badge>
@@ -115,7 +115,7 @@ export default function ProfilePage() {
               {profile?.role === 'ARTISAN' && (
                 <Button
                   onClick={() => router.push('/dashboard')}
-                  className="w-full bg-orange hover:bg-orange/90"
+                  className="w-full bg-black hover:bg-gray-800"
                 >
                   <Settings size={16} className="mr-2" />
                   Go to Dashboard

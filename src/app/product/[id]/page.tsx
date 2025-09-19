@@ -165,7 +165,7 @@ export default function ProductPage() {
           <div>
             <h1 className="text-2xl font-bold text-foreground mb-2">{product.title}</h1>
             <p className="text-muted-foreground mb-4">{product.description}</p>
-            <Badge variant="secondary" className="bg-orange text-white text-lg px-3 py-1">
+            <Badge variant="secondary" className="bg-black text-white text-lg px-3 py-1">
               ${product.price}
             </Badge>
           </div>
@@ -242,7 +242,7 @@ export default function ProductPage() {
               Add to Cart
             </Button>
             <Button
-              className="flex-1 bg-orange hover:bg-orange/90"
+              className="flex-1 bg-black hover:bg-gray-800"
               onClick={() => buyNowMutation.mutate()}
               disabled={buyNowMutation.isPending}
             >

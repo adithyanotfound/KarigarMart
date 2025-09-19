@@ -8,10 +8,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --font-serif: "tiempos", "tiempos Fallback", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --color-dark-grey: #1f1e1d;
-  --color-light-grey: #262624;
-  --color-orange: #d97757;
+  --color-dark-grey: #1a1a1a;
+  --color-medium-grey: #404040;
+  --color-light-grey: #a1a1a1;
+  --color-very-light-grey: #f5f5f5;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -50,23 +50,23 @@
 :root {
   --radius: 0.625rem;
   --background: #ffffff;
-  --foreground: #1f1e1d;
+  --foreground: #1a1a1a;
   --card: #ffffff;
-  --card-foreground: #1f1e1d;
+  --card-foreground: #1a1a1a;
   --popover: #ffffff;
-  --popover-foreground: #1f1e1d;
-  --primary: #d97757;
+  --popover-foreground: #1a1a1a;
+  --primary: #404040;
   --primary-foreground: #ffffff;
-  --secondary: #262624;
-  --secondary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #1a1a1a;
   --muted: #f5f5f5;
   --muted-foreground: #6b7280;
-  --accent: #d97757;
+  --accent: #404040;
   --accent-foreground: #ffffff;
-  --destructive: #ef4444;
+  --destructive: #666666;
   --border: #e5e7eb;
   --input: #f9fafb;
-  --ring: #d97757;
+  --ring: #404040;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -83,24 +83,24 @@
 }
 
 .dark {
-  --background: #1f1e1d;
+  --background: #1a1a1a;
   --foreground: #ffffff;
-  --card: #262624;
+  --card: #404040;
   --card-foreground: #ffffff;
-  --popover: #262624;
+  --popover: #404040;
   --popover-foreground: #ffffff;
-  --primary: #d97757;
-  --primary-foreground: #ffffff;
-  --secondary: #262624;
+  --primary: #a1a1a1;
+  --primary-foreground: #1a1a1a;
+  --secondary: #404040;
   --secondary-foreground: #ffffff;
-  --muted: #374151;
-  --muted-foreground: #9ca3af;
-  --accent: #d97757;
-  --accent-foreground: #ffffff;
-  --destructive: #ef4444;
-  --border: #374151;
-  --input: #262624;
-  --ring: #d97757;
+  --muted: #404040;
+  --muted-foreground: #a1a1a1;
+  --accent: #a1a1a1;
+  --accent-foreground: #1a1a1a;
+  --destructive: #666666;
+  --border: #404040;
+  --input: #404040;
+  --ring: #a1a1a1;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -122,6 +122,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "tiempos", "tiempos Fallback", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
   }
 }

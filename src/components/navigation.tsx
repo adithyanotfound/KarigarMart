@@ -24,7 +24,11 @@ async function fetchCartCount() {
   return data.items?.length || 0
 }
 
-export function Navigation() {
+interface NavigationProps {
+  isHidden?: boolean
+}
+
+export function Navigation({ isHidden = false }: NavigationProps) {
   const { data: session } = useSession()
   const router = useRouter()
 
@@ -55,6 +59,10 @@ export function Navigation() {
     signOut({ callbackUrl: '/' })
   }
 
+  if (isHidden) {
+    return null
+  }
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-sm border-b border-white/10">
       <div className="flex items-center justify-between px-4 py-3">
@@ -75,7 +83,7 @@ export function Navigation() {
             <ShoppingCart size={20} />
             {cartCount > 0 && (
               <Badge 
-                className="absolute -top-1 -right-1 bg-orange text-white border-none min-w-[20px] h-5 text-xs flex items-center justify-center"
+                className="absolute -top-1 -right-1 bg-black text-white border-none min-w-[20px] h-5 text-xs flex items-center justify-center"
               >
                 {cartCount}
               </Badge>
@@ -94,21 +102,21 @@ export function Navigation() {
                   <User size={20} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[#1f1e1d] border-[#262624]">
-                <DropdownMenuItem onClick={handleProfileClick} className="text-white hover:bg-[#262624]">
+              <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#404040]">
+                <DropdownMenuItem onClick={handleProfileClick} className="text-white hover:bg-[#404040]">
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </DropdownMenuItem>
                 {session.user.role === 'ARTISAN' && (
                   <DropdownMenuItem 
                     onClick={() => router.push('/dashboard')} 
-                    className="text-white hover:bg-[#262624]"
+                    className="text-white hover:bg-[#404040]"
                   >
                     Dashboard
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator className="bg-[#262624]" />
-                <DropdownMenuItem onClick={handleSignOut} className="text-white hover:bg-[#262624]">
+                <DropdownMenuSeparator className="bg-[#404040]" />
+                <DropdownMenuItem onClick={handleSignOut} className="text-white hover:bg-[#404040]">
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>

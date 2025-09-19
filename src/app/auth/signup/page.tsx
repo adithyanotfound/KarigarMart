@@ -217,7 +217,7 @@ export default function SignUpPage() {
 
               <Button 
                 type="submit" 
-                className="w-full bg-orange hover:bg-orange/90" 
+                className="w-full bg-black hover:bg-gray-800" 
                 disabled={isLoading}
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
@@ -229,7 +229,7 @@ export default function SignUpPage() {
                 Already have an account?{" "}
                 <Link 
                   href="/auth/signin" 
-                  className="text-orange hover:text-orange/90 font-medium"
+                  className="text-gray-600 hover:text-black font-medium"
                 >
                   Sign in
                 </Link>

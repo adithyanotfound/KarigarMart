@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { createClient } from "@deepgram/sdk"
 
-// Initialize Google AI
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY!)
+// Initialize Deepgram client
+const deepgram = createClient(process.env.DEEPGRAM_API_KEY!)
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,31 +16,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Convert audio file to base64
+    // Convert audio file to buffer
     const arrayBuffer = await audioFile.arrayBuffer()
-    const base64Audio = Buffer.from(arrayBuffer).toString('base64')
+    const audioBuffer = Buffer.from(arrayBuffer)
 
     // Get the file type
     const mimeType = audioFile.type || 'audio/wav'
 
-    // Use Google's Gemini model for speech-to-text
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" })
-
-    const result = await model.generateContent([
+    // Use Deepgram for speech-to-text transcription
+    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
+      audioBuffer,
       {
-        inlineData: {
-          data: base64Audio,
-          mimeType: mimeType
-        }
-      },
-      {
-        text: "Please transcribe this audio to text. Only return the transcribed text, nothing else."
+        model: 'nova-3',
+        detect_language: true,
+        smart_format: true,
       }
-    ])
+    )
 
-    const transcription = result.response.text()
+    if (error) {
+      throw new Error(`Deepgram error: ${error.message}`)
+    }
 
-    if (!transcription || transcription.trim().length === 0) {
+    const transcript = result.results.channels[0].alternatives[0].transcript
+
+    if (!transcript || transcript.trim().length === 0) {
       return NextResponse.json(
         { error: 'No speech detected in the audio file' },
         { status: 400 }
@@ -49,11 +48,11 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      transcription: transcription.trim()
+      transcription: transcript.trim()
     })
-
   } catch (error) {
-    console.error('TTS error:', error)
+    //@ts-ignore
+    throw new Error(`Transcription failed: ${error.message}`);
     return NextResponse.json(
       { error: 'Failed to transcribe audio' },
       { status: 500 }

@@ -37,6 +37,16 @@ export default function OnboardingPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const recordingStartTime = useRef<number | null>(null)
 
+  // Story audio recording state
+  const [isStoryRecording, setIsStoryRecording] = useState(false)
+  const [isStoryPlaying, setIsStoryPlaying] = useState(false)
+  const [storyAudioBlob, setStoryAudioBlob] = useState<Blob | null>(null)
+  const [storyAudioUrl, setStoryAudioUrl] = useState<string | null>(null)
+  const [storyRecordingDuration, setStoryRecordingDuration] = useState(0)
+  const storyMediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const storyAudioRef = useRef<HTMLAudioElement | null>(null)
+  const storyRecordingStartTime = useRef<number | null>(null)
+
   const totalSteps = 4
 
   // Check if artisan has already completed onboarding
@@ -151,6 +161,87 @@ export default function OnboardingPage() {
     toast.info("Ready to record again. Click 'Start Recording' when ready.")
   }
 
+  // Story audio recording functions
+  const startStoryRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      storyMediaRecorderRef.current = mediaRecorder
+
+      const audioChunks: BlobPart[] = []
+      
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data)
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
+        setStoryAudioBlob(audioBlob)
+        const url = URL.createObjectURL(audioBlob)
+        setStoryAudioUrl(url)
+        stream.getTracks().forEach(track => track.stop())
+        toast.success("Story recording completed!")
+      }
+
+      mediaRecorder.start()
+      setIsStoryRecording(true)
+      storyRecordingStartTime.current = Date.now()
+      setStoryRecordingDuration(0)
+      toast.info("Story recording started...")
+    } catch (error) {
+      toast.error("Could not access microphone. Please check permissions.")
+      console.error('Error accessing microphone:', error)
+    }
+  }
+
+  const stopStoryRecording = () => {
+    if (storyMediaRecorderRef.current && isStoryRecording) {
+      storyMediaRecorderRef.current.stop()
+      setIsStoryRecording(false)
+      if (storyRecordingStartTime.current) {
+        const duration = Math.round((Date.now() - storyRecordingStartTime.current) / 1000)
+        setStoryRecordingDuration(duration)
+      }
+    }
+  }
+
+  const playStoryAudio = () => {
+    if (storyAudioUrl && storyAudioRef.current) {
+      storyAudioRef.current.play()
+      setIsStoryPlaying(true)
+    }
+  }
+
+  const stopStoryAudio = () => {
+    if (storyAudioRef.current) {
+      storyAudioRef.current.pause()
+      storyAudioRef.current.currentTime = 0
+      setIsStoryPlaying(false)
+    }
+  }
+
+  const handleStoryAudioEnded = () => {
+    setIsStoryPlaying(false)
+  }
+
+  const deleteStoryAudio = () => {
+    setStoryAudioBlob(null)
+    setStoryAudioUrl(null)
+    setStoryRecordingDuration(0)
+    setIsStoryPlaying(false)
+    if (storyAudioRef.current) {
+      storyAudioRef.current.pause()
+      storyAudioRef.current.currentTime = 0
+    }
+    toast.success("Story audio recording deleted")
+  }
+
+  const reRecordStoryAudio = () => {
+    deleteStoryAudio() // Clear current audio
+    // The user can then start recording again
+    toast.info("Ready to record story again. Click 'Start Recording' when ready.")
+  }
+
   const processAudioToText = async (audioBlob: Blob): Promise<string> => {
     const formData = new FormData()
     formData.append('audio', audioBlob, 'recording.wav')
@@ -188,9 +279,9 @@ export default function OnboardingPage() {
   }
 
   const handleSubmit = async () => {
-    if (!formData.story.trim()) {
-      setError("Please tell us your story")
-      toast.error("Please tell us your story")
+    if (!formData.story.trim() && !storyAudioBlob) {
+      setError("Please tell us your story or record an audio message")
+      toast.error("Please tell us your story or record an audio message")
       return
     }
 
@@ -205,26 +296,27 @@ export default function OnboardingPage() {
 
     try {
       let finalAbout = formData.about
+      let finalStory = formData.story
 
-      // If audio is recorded, process it (audio takes priority over text input)
+      // Process about audio (audio takes priority over text input)
       if (audioBlob) {
-        toast.info("Processing audio...")
+        toast.info("Processing about audio...")
         try {
           const transcription = await processAudioToText(audioBlob)
           if (transcription.trim()) {
             // Use audio transcription as the about text
             finalAbout = transcription
-            toast.success("Audio transcribed successfully!")
+            toast.success("About audio transcribed successfully!")
           } else {
             // If transcription is empty, fall back to text input
             if (formData.about.trim()) {
               finalAbout = formData.about
-              toast.info("No speech detected in audio. Using text input.")
+              toast.info("No speech detected in about audio. Using text input.")
             }
           }
         } catch (audioError) {
-          console.error('Audio processing error:', audioError)
-          toast.error("Failed to process audio. Using text input instead.")
+          console.error('About audio processing error:', audioError)
+          toast.error("Failed to process about audio. Using text input instead.")
           // Continue with text input if audio processing fails
           if (formData.about.trim()) {
             finalAbout = formData.about
@@ -232,18 +324,60 @@ export default function OnboardingPage() {
         }
       }
 
-      // If we have text (either from input or audio), generate summary
+      // Process story audio (audio takes priority over text input)
+      if (storyAudioBlob) {
+        toast.info("Processing story audio...")
+        try {
+          const transcription = await processAudioToText(storyAudioBlob)
+          if (transcription.trim()) {
+            // Use audio transcription as the story text
+            finalStory = transcription
+            toast.success("Story audio transcribed successfully!")
+          } else {
+            // If transcription is empty, fall back to text input
+            if (formData.story.trim()) {
+              finalStory = formData.story
+              toast.info("No speech detected in story audio. Using text input.")
+            }
+          }
+        } catch (audioError) {
+          console.error('Story audio processing error:', audioError)
+          toast.error("Failed to process story audio. Using text input instead.")
+          // Continue with text input if audio processing fails
+          if (formData.story.trim()) {
+            finalStory = formData.story
+          }
+        }
+      }
+
+      // If we have text (either from input or audio), generate summary for about
       if (finalAbout.trim()) {
         try {
-          toast.info("Generating professional summary...")
+          toast.info("Generating professional summary for about section...")
           const summary = await generateSummary(finalAbout)
           if (summary.trim()) {
             finalAbout = summary
-            toast.success("Professional summary generated!")
+            toast.success("Professional summary generated for about section!")
           }
         } catch (summaryError) {
           console.error('Summary generation error:', summaryError)
           toast.error("Failed to generate summary. Using original text.")
+          // Continue with original text if summary generation fails
+        }
+      }
+
+      // If we have text (either from input or audio), generate summary for story
+      if (finalStory.trim()) {
+        try {
+          toast.info("Generating professional summary for story section...")
+          const summary = await generateSummary(finalStory)
+          if (summary.trim()) {
+            finalStory = summary
+            toast.success("Professional summary generated for story section!")
+          }
+        } catch (summaryError) {
+          console.error('Story summary generation error:', summaryError)
+          toast.error("Failed to generate story summary. Using original text.")
           // Continue with original text if summary generation fails
         }
       }
@@ -254,7 +388,7 @@ export default function OnboardingPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          story: formData.story,
+          story: finalStory,
           about: finalAbout
         }),
       })
@@ -557,19 +691,133 @@ export default function OnboardingPage() {
                 <p className="text-muted-foreground">
                   Share your journey as an artisan. What inspired you to create? What makes your work special?
                 </p>
-                <div className="space-y-2">
-                  <Label htmlFor="story">Your Artisan Journey</Label>
-                  <Textarea
-                    id="story"
-                    value={formData.story}
-                    onChange={(e) => setFormData({ ...formData, story: e.target.value })}
-                    placeholder="I&apos;ve been crafting for... My inspiration comes from... What makes my work unique is..."
-                    className="min-h-[120px]"
-                    disabled={isLoading}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This will be displayed on your products to help customers connect with your work.
-                  </p>
+                <div className="space-y-4">              
+                  <div className="space-y-3">
+                    <Label>Audio Recording (Recommended)</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Record an audio message to tell your story in your own voice. This will be automatically transcribed.
+                    </p>
+                    
+                    <div className="space-y-3">
+                      {/* Recording Controls */}
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        {!isStoryRecording ? (
+                          <Button
+                            type="button"
+                            variant={storyAudioBlob ? "secondary" : "outline"}
+                            onClick={startStoryRecording}
+                            disabled={isLoading}
+                            className={`flex items-center gap-2 ${storyAudioBlob ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}`}
+                          >
+                            <Mic size={16} />
+                            {storyAudioBlob ? "Record Again" : "Start Recording"}
+                          </Button>
+                        ) : (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            onClick={stopStoryRecording}
+                            disabled={isLoading}
+                            className="flex items-center gap-2"
+                          >
+                            <Square size={16} />
+                            Stop Recording
+                          </Button>
+                        )}
+                        
+                        {storyAudioUrl && (
+                          <div className="flex items-center gap-2">
+                            {!isStoryPlaying ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={playStoryAudio}
+                                disabled={isLoading}
+                                className="flex items-center gap-2"
+                              >
+                                <Play size={14} />
+                                Play
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={stopStoryAudio}
+                                disabled={isLoading}
+                                className="flex items-center gap-2"
+                              >
+                                <Square size={14} />
+                                Stop
+                              </Button>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                              {isStoryRecording ? "Recording..." : `Audio recorded (${storyRecordingDuration}s)`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Audio Management Controls */}
+                      {storyAudioUrl && (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                            <CheckCircle size={16} />
+                            <span>Story audio recording completed ({storyRecordingDuration}s)</span>
+                          </div>
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={reRecordStoryAudio}
+                              disabled={isLoading || isStoryRecording}
+                              className="flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            >
+                              <RotateCcw size={14} />
+                              Re-record
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={deleteStoryAudio}
+                              disabled={isLoading || isStoryRecording}
+                              className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 size={14} />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {storyAudioUrl && (
+                      <audio
+                        ref={storyAudioRef}
+                        src={storyAudioUrl}
+                        onEnded={handleStoryAudioEnded}
+                        className="hidden"
+                      />
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="story">Or Type Your Story (Alternative)</Label>
+                    <Textarea
+                      id="story"
+                      value={formData.story}
+                      onChange={(e) => setFormData({ ...formData, story: e.target.value })}
+                      placeholder="I&apos;ve been crafting for... My inspiration comes from... What makes my work unique is..."
+                      className="min-h-[120px]"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {storyAudioBlob ? "Audio recording will be used instead of this text. You can delete the audio above to use this text instead." : "This will be displayed on your products to help customers connect with your work."}
+                    </p>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -597,7 +845,7 @@ export default function OnboardingPage() {
                 <Button
                   onClick={handleSubmit}
                   className="bg-black hover:bg-gray-800"
-                  disabled={isLoading || !formData.story.trim() || (!formData.about.trim() && !audioBlob)}
+                  disabled={isLoading || (!formData.story.trim() && !storyAudioBlob) || (!formData.about.trim() && !audioBlob)}
                 >
                   {isLoading ? "Processing..." : "Complete Setup"}
                 </Button>

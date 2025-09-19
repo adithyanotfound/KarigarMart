@@ -122,30 +122,29 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
 
   // Handle scroll navigation
   useEffect(() => {
-    let scrollTimeout: NodeJS.Timeout
-    let lastScrollY = 0
+    let lastScrollTime = 0
     let isScrolling = false
 
     const handleScroll = (event: WheelEvent) => {
       // Prevent default scroll behavior
       event.preventDefault()
+      event.stopPropagation()
       
-      // Clear existing timeout
-      clearTimeout(scrollTimeout)
+      const now = Date.now()
       
-      // If already scrolling, ignore this event
-      if (isScrolling) return
+      // If already scrolling or too recent, ignore this event
+      if (isScrolling || (now - lastScrollTime) < 300) return
       
       const deltaY = event.deltaY
-      const currentScrollY = window.scrollY
+      
+      // Ignore very small scroll events that might be noise
+      if (Math.abs(deltaY) < 20) return
       
       // Determine scroll direction
-      const isScrollingDown = deltaY > 0 || currentScrollY > lastScrollY
-      const isScrollingUp = deltaY < 0 || currentScrollY < lastScrollY
+      const isScrollingDown = deltaY > 0
+      const isScrollingUp = deltaY < 0
       
-      lastScrollY = currentScrollY
-      
-      // Set scrolling flag to prevent multiple rapid changes
+      lastScrollTime = now
       isScrolling = true
       
       if (isScrollingDown && currentIndex < products.length - 1) {
@@ -163,10 +162,10 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
         setDirection(-1)
       }
       
-      // Reset scrolling flag after a short delay
-      scrollTimeout = setTimeout(() => {
+      // Reset scrolling flag after a delay to prevent double scrolling
+      setTimeout(() => {
         isScrolling = false
-      }, 150)
+      }, 300)
     }
 
     // Add scroll event listener with passive: false to allow preventDefault
@@ -174,7 +173,6 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
     
     return () => {
       window.removeEventListener('wheel', handleScroll)
-      clearTimeout(scrollTimeout)
     }
   }, [currentIndex, products.length, isFetchingNextPage, fetchNextPage])
 
@@ -208,7 +206,11 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
   }
 
   return (
-    <div ref={containerRef} className="relative h-screen overflow-hidden bg-black">
+    <div 
+      ref={containerRef} 
+      className="relative h-screen overflow-hidden bg-black"
+      style={{ touchAction: 'none' }} // Prevent default touch behaviors
+    >
       <motion.div
         className="absolute inset-0"
         style={{ y, opacity }}

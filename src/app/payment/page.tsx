@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function PaymentPage() {
   const router = useRouter()
@@ -19,18 +20,6 @@ export default function PaymentPage() {
 
   const total = searchParams.get('total') || '0.00'
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    router.push('/auth/signin')
-    return null
-  }
 
   const handlePayment = async () => {
     setIsProcessing(true)
@@ -49,23 +38,26 @@ export default function PaymentPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center"
-        >
-          <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
-          <p className="text-muted-foreground mb-4">Thank you for your purchase.</p>
-          <p className="text-sm text-muted-foreground">Redirecting to home...</p>
-        </motion.div>
-      </div>
+      <AuthGuard requireAuth={true}>
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center"
+          >
+            <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
+            <p className="text-muted-foreground mb-4">Thank you for your purchase.</p>
+            <p className="text-sm text-muted-foreground">Redirecting to home...</p>
+          </motion.div>
+        </div>
+      </AuthGuard>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
@@ -204,6 +196,7 @@ export default function PaymentPage() {
           <p className="mt-1 text-xs">This is a demo payment page. No real charges will be made.</p>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

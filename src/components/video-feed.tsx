@@ -56,7 +56,7 @@ export function VideoFeed() {
   } = useInfiniteQuery({
     queryKey: ['products'],
     queryFn: fetchProducts,
-    getNextPageParam: (lastPage) => lastPage.nextCursor,
+    getNextPageParam: (lastPage) => lastPage.nextCursor, // Always has next page due to cycling
     initialPageParam: undefined,
   })
 
@@ -116,8 +116,8 @@ export function VideoFeed() {
         setCurrentIndex(currentIndex + 1)
         setDirection(1)
         
-        // Fetch more if near the end
-        if (currentIndex >= products.length - 3 && hasNextPage && !isFetchingNextPage) {
+        // Always fetch more content to ensure infinite scroll
+        if (currentIndex >= products.length - 3 && !isFetchingNextPage) {
           fetchNextPage()
         }
       }

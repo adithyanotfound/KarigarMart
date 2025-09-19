@@ -8,6 +8,7 @@ import { ArrowLeft, User, Mail, Calendar, LogOut, Settings } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { AuthGuard } from "@/components/auth-guard"
 
 async function fetchUserProfile() {
   const response = await fetch('/api/user/profile')
@@ -27,27 +28,16 @@ export default function ProfilePage() {
     enabled: !!session,
   })
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    router.push('/auth/signin')
-    return null
-  }
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' })
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
           <Button
             variant="ghost"
@@ -158,6 +148,7 @@ export default function ProfilePage() {
           </motion.div>
         )}
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

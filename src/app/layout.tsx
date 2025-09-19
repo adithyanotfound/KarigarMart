@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { PWAPrompt } from "@/components/pwa-prompt";
+import { EthereumFix } from "@/components/ethereum-fix";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Script from "next/script";
@@ -62,6 +63,7 @@ export default async function RootLayout({
       >
         <QueryProvider>
           <AuthSessionProvider session={session}>
+            <EthereumFix />
             {children}
             <PWAPrompt />
           </AuthSessionProvider>

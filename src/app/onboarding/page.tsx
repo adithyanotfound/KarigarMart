@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { AuthGuard } from "@/components/auth-guard"
 
 export default function OnboardingPage() {
   const { data: session, status } = useSession()
@@ -26,18 +27,6 @@ export default function OnboardingPage() {
 
   const totalSteps = 3
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!session || session.user.role !== 'ARTISAN') {
-    router.push('/')
-    return null
-  }
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -94,25 +83,34 @@ export default function OnboardingPage() {
 
   const progressPercentage = (currentStep / totalSteps) * 100
 
+  // Check if user is an artisan
+  if (session && session.user.role !== 'ARTISAN') {
+    router.push('/')
+    return null
+  }
+
   if (currentStep > totalSteps) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center"
-        >
-          <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to ArtisanMarket!</h1>
-          <p className="text-muted-foreground mb-4">Your profile has been created successfully.</p>
-          <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
-        </motion.div>
-      </div>
+      <AuthGuard requireAuth={true}>
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-center"
+          >
+            <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">Welcome to ArtisanMarket!</h1>
+            <p className="text-muted-foreground mb-4">Your profile has been created successfully.</p>
+            <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
+          </motion.div>
+        </div>
+      </AuthGuard>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -245,9 +243,10 @@ export default function OnboardingPage() {
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+        </CardContent>
+      </Card>
       </motion.div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

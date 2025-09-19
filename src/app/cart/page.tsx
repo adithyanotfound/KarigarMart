@@ -8,6 +8,7 @@ import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { AuthGuard } from "@/components/auth-guard"
 import Image from "next/image"
 
 interface CartItem {
@@ -88,18 +89,6 @@ export default function CartPage() {
     },
   })
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!session) {
-    router.push('/auth/signin')
-    return null
-  }
 
   if (isLoading) {
     return (
@@ -124,9 +113,10 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
           <Button
             variant="ghost"
@@ -274,6 +264,7 @@ export default function CartPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

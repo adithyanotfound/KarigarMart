@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { AuthGuard } from "@/components/auth-guard"
 import Image from "next/image"
 
 interface Product {
@@ -41,8 +42,7 @@ export default function DashboardPage() {
     title: "",
     description: "",
     price: "",
-    imageUrl: "",
-    videoUrl: ""
+    imageUrl: ""
   })
   const [error, setError] = useState("")
 
@@ -76,8 +76,7 @@ export default function DashboardPage() {
         title: "",
         description: "",
         price: "",
-        imageUrl: "",
-        videoUrl: ""
+        imageUrl: ""
       })
       setError("")
     },
@@ -86,25 +85,13 @@ export default function DashboardPage() {
     }
   })
 
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading...</div>
-      </div>
-    )
-  }
-
-  if (!session || session.user.role !== 'ARTISAN') {
-    router.push('/')
-    return null
-  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
     // Validation
-    if (!formData.title || !formData.description || !formData.price || !formData.imageUrl || !formData.videoUrl) {
+    if (!formData.title || !formData.description || !formData.price || !formData.imageUrl) {
       setError("All fields are required")
       return
     }
@@ -119,8 +106,15 @@ export default function DashboardPage() {
 
   const products = data?.products || []
 
+  // Check if user is an artisan
+  if (session && session.user.role !== 'ARTISAN') {
+    router.push('/')
+    return null
+  }
+
   return (
-    <div className="min-h-screen bg-background">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 py-4">
@@ -148,7 +142,7 @@ export default function DashboardPage() {
                   Add Product
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+              <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Add New Product</DialogTitle>
                   <DialogDescription>
@@ -214,20 +208,6 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="videoUrl">Video URL</Label>
-                    <Input
-                      id="videoUrl"
-                      type="url"
-                      value={formData.videoUrl}
-                      onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                      placeholder="https://example.com/video.mp4"
-                      disabled={createProductMutation.isPending}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Use one of the demo videos or upload your own. Demo: https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/3f42e166-6ce9-47f0-a4b9-6cf1cbbddc1c.mp4
-                    </p>
-                  </div>
 
                   <div className="flex gap-2 pt-4">
                     <Button
@@ -367,6 +347,7 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

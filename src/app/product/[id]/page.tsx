@@ -9,6 +9,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { AuthGuard } from "@/components/auth-guard"
 import Image from "next/image"
 
 interface Product {
@@ -117,7 +118,8 @@ export default function ProductPage() {
   const total = Number(product.price) * quantity
 
   return (
-    <div className="min-h-screen bg-background">
+    <AuthGuard requireAuth={true}>
+      <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="flex items-center justify-between p-4">
@@ -249,6 +251,7 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </AuthGuard>
   )
 }

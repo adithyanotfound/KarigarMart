@@ -65,10 +65,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { title, description, price, imageUrl, videoUrl } = await request.json()
+    const { title, description, price, imageUrl } = await request.json()
 
     // Validation
-    if (!title || !description || !price || !imageUrl || !videoUrl) {
+    if (!title || !description || !price || !imageUrl) {
       return NextResponse.json(
         { error: 'All fields are required' },
         { status: 400 }
@@ -82,6 +82,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Use a default video URL (will be replaced by /post endpoint)
+    const defaultVideoUrls = [
+      'https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/3f42e166-6ce9-47f0-a4b9-6cf1cbbddc1c.mp4',
+      'https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/4be137dc-5450-43e3-a98b-57206a3e6360.mp4',
+      'https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/2f185801-a7b3-4548-822e-1cc16aa478fd.mp4',
+      'https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/ae41b08a-794c-4131-93e5-d0a82f6df682.mp4',
+      'https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/7985448e-5b0c-42fa-ad02-2e924d9ace90.mp4'
+    ]
+    const randomVideoUrl = defaultVideoUrls[Math.floor(Math.random() * defaultVideoUrls.length)]
+
     // Create product
     const product = await prisma.product.create({
       data: {
@@ -89,7 +99,7 @@ export async function POST(request: NextRequest) {
         description,
         price: Number(price),
         imageUrl,
-        videoUrl,
+        videoUrl: randomVideoUrl,
         artisanId: user.artisanProfile.id
       },
       include: {

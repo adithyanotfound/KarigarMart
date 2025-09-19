@@ -106,32 +106,36 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
   })
 
   const handlePanEnd = (event: any, info: PanInfo) => {
-    const threshold = 50 // Reduced threshold for more responsive swiping
+    const minSwipeDistance = 20 // Minimum distance to register a swipe
     const velocity = info.velocity.y
-    const velocityThreshold = 300 // Reduced velocity threshold
+    const velocityThreshold = 200 // Velocity threshold for quick swipes
     
     let shouldChange = false
 
-    if (info.offset.y > threshold || velocity > velocityThreshold) {
-      // Swipe down - previous video
-      if (currentIndex > 0) {
-        setCurrentIndex(currentIndex - 1)
-        setDirection(-1)
-        shouldChange = true
-      }
-    } else if (info.offset.y < -threshold || velocity < -velocityThreshold) {
-      // Swipe up - next video
-      if (currentIndex < products.length - 1) {
-        setCurrentIndex(currentIndex + 1)
-        setDirection(1)
-        shouldChange = true
-        
-        // Always fetch more content to ensure infinite scroll
-        if (currentIndex >= products.length - 3 && !isFetchingNextPage) {
-          fetchNextPage()
+    // Check if it's a vertical swipe (up or down)
+    if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
+      // Vertical swipe detected
+      if (info.offset.y > minSwipeDistance || velocity > velocityThreshold) {
+        // Swipe down - previous video
+        if (currentIndex > 0) {
+          setCurrentIndex(currentIndex - 1)
+          setDirection(-1)
+          shouldChange = true
+        }
+      } else if (info.offset.y < -minSwipeDistance || velocity < -velocityThreshold) {
+        // Swipe up - next video
+        if (currentIndex < products.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+          setDirection(1)
+          shouldChange = true
+          
+          // Always fetch more content to ensure infinite scroll
+          if (currentIndex >= products.length - 3 && !isFetchingNextPage) {
+            fetchNextPage()
+          }
         }
       }
-    } else if (info.offset.x > threshold || info.velocity.x > velocityThreshold) {
+    } else if (info.offset.x > minSwipeDistance || info.velocity.x > velocityThreshold) {
       // Swipe right - go to product page
       if (products[currentIndex]) {
         router.push(`/product/${products[currentIndex].id}`)
@@ -139,18 +143,13 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
       shouldChange = true
     }
 
-    // Snap back to center with animation
-    if (!shouldChange) {
-      // Add a subtle spring animation when snapping back
-      y.stop()
-      y.set(0, {
-        type: "spring",
-        stiffness: 500,
-        damping: 30
-      } as any)
-    } else {
-      y.set(0)
-    }
+    // Always snap back to center with smooth animation
+    y.stop()
+    y.set(0, {
+      type: "spring",
+      stiffness: 400,
+      damping: 30
+    } as any)
   }
 
   useEffect(() => {

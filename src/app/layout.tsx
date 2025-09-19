@@ -69,7 +69,7 @@ export default async function RootLayout({
               <EthereumFix />
               {children}
               <PWAPrompt />
-              <Toaster richColors position="top-right" />
+              <Toaster richColors position="top-left" />
             </VideoSettingsProvider>
           </AuthSessionProvider>
         </QueryProvider>

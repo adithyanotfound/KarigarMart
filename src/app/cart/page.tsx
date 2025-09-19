@@ -1,102 +1,18 @@
 "use client"
 
-import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { useSession } from "next-auth/react"
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
-import { toast } from "sonner"
+import { useCart } from "@/hooks/use-cart"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AuthGuard } from "@/components/auth-guard"
 import Image from "next/image"
 
-interface CartItem {
-  id: string
-  quantity: number
-  product: {
-    id: string
-    title: string
-    price: number
-    imageUrl: string
-    artisan: {
-      user: {
-        name: string
-      }
-    }
-  }
-}
-
-interface CartData {
-  items: CartItem[]
-  total: number
-}
-
-async function fetchCart(): Promise<CartData> {
-  const response = await fetch('/api/cart')
-  if (!response.ok) {
-    throw new Error('Failed to fetch cart')
-  }
-  return response.json()
-}
 
 export default function CartPage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
-  const queryClient = useQueryClient()
-
-  const { data: cart, isLoading, error } = useQuery({
-    queryKey: ['cart'],
-    queryFn: fetchCart,
-    enabled: !!session,
-  })
-
-  const removeItemMutation = useMutation({
-    mutationFn: async (itemId: string) => {
-      const response = await fetch(`/api/cart?itemId=${itemId}`, {
-        method: 'DELETE',
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to remove item')
-      }
-      
-      return response.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success("Item removed from cart")
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to remove item from cart")
-    },
-  })
-
-  const updateQuantityMutation = useMutation({
-    mutationFn: async ({ productId, quantity }: { productId: string; quantity: number }) => {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId, quantity }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to update quantity')
-      }
-      
-      return response.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success("Cart updated")
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to update cart")
-    },
-  })
+  const { cart, isLoading, error, updateQuantity, removeItem } = useCart()
 
 
   if (isLoading) {
@@ -186,7 +102,7 @@ export default function CartPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeItemMutation.mutate(item.id)}
+                          onClick={() => removeItem(item.id)}
                           className="text-red-500 hover:text-red-700 p-1"
                         >
                           <Trash2 size={16} />
@@ -198,10 +114,7 @@ export default function CartPage() {
                             size="sm"
                             onClick={() => {
                               if (item.quantity > 1) {
-                                updateQuantityMutation.mutate({
-                                  productId: item.product.id,
-                                  quantity: -1
-                                })
+                                updateQuantity(item.product.id, -1)
                               }
                             }}
                             disabled={item.quantity <= 1}
@@ -218,10 +131,7 @@ export default function CartPage() {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                              updateQuantityMutation.mutate({
-                                productId: item.product.id,
-                                quantity: 1
-                              })
+                              updateQuantity(item.product.id, 1)
                             }}
                             className="w-8 h-8 p-0"
                           >

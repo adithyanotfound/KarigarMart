@@ -1,12 +1,11 @@
 "use client"
 
-import { useState } from "react"
 import { ShoppingCart, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useSession, signOut } from "next-auth/react"
-import { useQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
+import { useCart } from "@/hooks/use-cart"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,15 +14,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-async function fetchCartCount() {
-  const response = await fetch('/api/cart')
-  if (!response.ok) {
-    throw new Error('Failed to fetch cart')
-  }
-  const data = await response.json()
-  return data.items?.length || 0
-}
-
 interface NavigationProps {
   isHidden?: boolean
 }
@@ -31,13 +21,7 @@ interface NavigationProps {
 export function Navigation({ isHidden = false }: NavigationProps) {
   const { data: session } = useSession()
   const router = useRouter()
-
-  const { data: cartCount = 0 } = useQuery({
-    queryKey: ['cart', 'count'],
-    queryFn: fetchCartCount,
-    enabled: !!session,
-    refetchOnWindowFocus: false,
-  })
+  const { cartCount } = useCart()
 
   const handleCartClick = () => {
     if (session) {

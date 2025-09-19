@@ -218,10 +218,10 @@ export default function OnboardingPage() {
                   Welcome, {session?.user.name}!
                 </h3>
                 <p className="text-muted-foreground">
-                  We're excited to have you join our community of talented artisans. Let's set up your profile so customers can discover your amazing work.
+                  We&apos;re excited to have you join our community of talented artisans. Let&apos;s set up your profile so customers can discover your amazing work.
                 </p>
                 <div className="bg-muted p-4 rounded-lg">
-                  <h4 className="font-semibold text-foreground mb-2">What you'll get:</h4>
+                  <h4 className="font-semibold text-foreground mb-2">What you&apos;ll get:</h4>
                   <ul className="text-sm text-muted-foreground space-y-1 text-left">
                     <li>• Your own dashboard to manage products</li>
                     <li>• Video-first product showcase</li>
@@ -280,7 +280,7 @@ export default function OnboardingPage() {
                       id="about"
                       value={formData.about}
                       onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                      placeholder="I am... My background is... I'm passionate about..."
+                      placeholder="I am... My background is... I&apos;m passionate about..."
                       className="min-h-[120px]"
                       disabled={isLoading}
                     />
@@ -383,7 +383,7 @@ export default function OnboardingPage() {
                     id="story"
                     value={formData.story}
                     onChange={(e) => setFormData({ ...formData, story: e.target.value })}
-                    placeholder="I've been crafting for... My inspiration comes from... What makes my work unique is..."
+                    placeholder="I&apos;ve been crafting for... My inspiration comes from... What makes my work unique is..."
                     className="min-h-[120px]"
                     disabled={isLoading}
                   />

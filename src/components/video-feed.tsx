@@ -3,26 +3,11 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, PanInfo, useMotionValue, useTransform } from "framer-motion"
 import { VideoPlayer } from "./video-player"
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { toast } from "sonner"
+import { useCart } from "@/hooks/use-cart"
 
-interface Product {
-  id: string
-  title: string
-  description: string
-  price: number
-  imageUrl: string
-  videoUrl: string
-  artisan: {
-    id: string
-    story: string
-    user: {
-      name: string
-    }
-  }
-}
 
 async function fetchProducts({ pageParam }: { pageParam?: string }) {
   const url = pageParam 
@@ -47,7 +32,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { data: session } = useSession()
-  const queryClient = useQueryClient()
+  const { addToCart } = useCart()
 
   const y = useMotionValue(0)
   const opacity = useTransform(y, [-100, 0, 100], [0.5, 1, 0.5])
@@ -55,7 +40,6 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
   const {
     data,
     fetchNextPage,
-    hasNextPage,
     isFetchingNextPage,
     isLoading,
     error
@@ -68,54 +52,25 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
 
   const products = data?.pages.flatMap(page => page.products) || []
 
-  const addToCartMutation = useMutation({
-    mutationFn: async (productId: string) => {
-      if (!session) {
-        router.push('/auth/signin')
-        return
-      }
-      
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId, quantity: 1 }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to add to cart')
-      }
-      
-      return response.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success("Added to cart!")
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to add to cart")
-    },
-  })
+  const handleAddToCart = (productId: string) => {
+    addToCart(productId, 1)
+  }
 
-  const likeMutation = useMutation({
-    mutationFn: async (productId: string) => {
-      if (!session) {
-        router.push('/auth/signin')
-        return
-      }
-      
-      // This would typically hit a likes API endpoint
-      console.log('Liked product:', productId)
-    },
-  })
+  const handleLike = (productId: string) => {
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
+    
+    // This would typically hit a likes API endpoint
+    console.log('Liked product:', productId)
+  }
 
-  const handlePanEnd = (event: any, info: PanInfo) => {
+  const handlePanEnd = (_event: unknown, info: PanInfo) => {
     const minSwipeDistance = 20 // Minimum distance to register a swipe
     const velocity = info.velocity.y
     const velocityThreshold = 200 // Velocity threshold for quick swipes
     
-    let shouldChange = false
 
     // Check if it's a vertical swipe (up or down)
     if (Math.abs(info.offset.y) > Math.abs(info.offset.x)) {
@@ -125,14 +80,12 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
         if (currentIndex > 0) {
           setCurrentIndex(currentIndex - 1)
           setDirection(-1)
-          shouldChange = true
         }
       } else if (info.offset.y < -minSwipeDistance || velocity < -velocityThreshold) {
         // Swipe up - next video
         if (currentIndex < products.length - 1) {
           setCurrentIndex(currentIndex + 1)
           setDirection(1)
-          shouldChange = true
           
           // Always fetch more content to ensure infinite scroll
           if (currentIndex >= products.length - 3 && !isFetchingNextPage) {
@@ -145,7 +98,6 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
       if (products[currentIndex]) {
         router.push(`/product/${products[currentIndex].id}`)
       }
-      shouldChange = true
     }
 
     // Always snap back to center with smooth animation
@@ -154,7 +106,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
       type: "spring",
       stiffness: 400,
       damping: 30
-    } as any)
+    } as const)
   }
 
   useEffect(() => {
@@ -171,6 +123,64 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [currentIndex, products.length])
+
+  // Handle scroll navigation
+  useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout
+    let lastScrollY = 0
+    let isScrolling = false
+
+    const handleScroll = (event: WheelEvent) => {
+      // Prevent default scroll behavior
+      event.preventDefault()
+      
+      // Clear existing timeout
+      clearTimeout(scrollTimeout)
+      
+      // If already scrolling, ignore this event
+      if (isScrolling) return
+      
+      const deltaY = event.deltaY
+      const currentScrollY = window.scrollY
+      
+      // Determine scroll direction
+      const isScrollingDown = deltaY > 0 || currentScrollY > lastScrollY
+      const isScrollingUp = deltaY < 0 || currentScrollY < lastScrollY
+      
+      lastScrollY = currentScrollY
+      
+      // Set scrolling flag to prevent multiple rapid changes
+      isScrolling = true
+      
+      if (isScrollingDown && currentIndex < products.length - 1) {
+        // Scroll down - next video
+        setCurrentIndex(currentIndex + 1)
+        setDirection(1)
+        
+        // Always fetch more content to ensure infinite scroll
+        if (currentIndex >= products.length - 3 && !isFetchingNextPage) {
+          fetchNextPage()
+        }
+      } else if (isScrollingUp && currentIndex > 0) {
+        // Scroll up - previous video
+        setCurrentIndex(currentIndex - 1)
+        setDirection(-1)
+      }
+      
+      // Reset scrolling flag after a short delay
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false
+      }, 150)
+    }
+
+    // Add scroll event listener with passive: false to allow preventDefault
+    window.addEventListener('wheel', handleScroll, { passive: false })
+    
+    return () => {
+      window.removeEventListener('wheel', handleScroll)
+      clearTimeout(scrollTimeout)
+    }
+  }, [currentIndex, products.length, isFetchingNextPage, fetchNextPage])
 
   // Notify parent when current video pause state changes
   useEffect(() => {
@@ -241,8 +251,8 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
               <VideoPlayer
                 product={product}
                 isActive={index === currentIndex}
-                onAddToCart={(productId) => addToCartMutation.mutate(productId)}
-                onLike={(productId) => likeMutation.mutate(productId)}
+                onAddToCart={handleAddToCart}
+                onLike={handleLike}
                 onPauseChange={index === currentIndex ? setCurrentVideoPaused : undefined}
               />
             )}

@@ -2,11 +2,10 @@
 
 import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
 import { ArrowLeft, ShoppingCart, Heart, Plus, Minus } from "lucide-react"
-import { toast } from "sonner"
-import { motion } from "framer-motion"
+import { useCart } from "@/hooks/use-cart"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -41,7 +40,7 @@ export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
-  const queryClient = useQueryClient()
+  const { addToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isLiked, setIsLiked] = useState(false)
 
@@ -52,50 +51,22 @@ export default function ProductPage() {
     queryFn: () => fetchProduct(productId),
   })
 
-  const addToCartMutation = useMutation({
-    mutationFn: async () => {
-      if (!session) {
-        router.push('/auth/signin')
-        return
-      }
-      
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ productId, quantity }),
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to add to cart')
-      }
-      
-      return response.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cart'] })
-      toast.success("Added to cart!")
-    },
-    onError: (error: Error) => {
-      toast.error("Failed to add to cart")
-    },
-  })
+  const handleAddToCart = () => {
+    addToCart(productId, quantity)
+  }
 
-  const buyNowMutation = useMutation({
-    mutationFn: async () => {
-      if (!session) {
-        router.push('/auth/signin')
-        return
-      }
-      
-      // Add to cart first
-      await addToCartMutation.mutateAsync()
-      // Then redirect to payment
-      const total = Number(product?.price || 0) * quantity
-      router.push(`/payment?total=${total.toFixed(2)}`)
-    },
-  })
+  const handleBuyNow = () => {
+    if (!session) {
+      router.push('/auth/signin')
+      return
+    }
+    
+    // Add to cart first
+    addToCart(productId, quantity)
+    // Then redirect to payment
+    const total = Number(product?.price || 0) * quantity
+    router.push(`/payment?total=${total.toFixed(2)}`)
+  }
 
   const handleLike = () => {
     setIsLiked(!isLiked)
@@ -238,16 +209,14 @@ export default function ProductPage() {
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => addToCartMutation.mutate()}
-              disabled={addToCartMutation.isPending}
+              onClick={handleAddToCart}
             >
               <ShoppingCart size={16} className="mr-2" />
               Add to Cart
             </Button>
             <Button
               className="flex-1 bg-black hover:bg-gray-800"
-              onClick={() => buyNowMutation.mutate()}
-              disabled={buyNowMutation.isPending}
+              onClick={handleBuyNow}
             >
               Buy Now
             </Button>

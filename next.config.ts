@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ['files.edgestore.dev'],
+    domains: [
+      'res.cloudinary.com',
+      'files.edgestore.dev',
+    ],
   },
   eslint: {
     // Warning: This allows production builds to successfully complete even if

@@ -44,7 +44,6 @@ export default function DashboardPage() {
     title: "",
     description: "",
     price: "",
-    imageUrl: ""
   })
   const [error, setError] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -58,13 +57,17 @@ export default function DashboardPage() {
   })
 
   const createProductMutation = useMutation({
-    mutationFn: async (productData: typeof formData) => {
+    mutationFn: async (data: { title: string; description: string; price: string; image: File }) => {
+      // Create FormData object
+      const formDataToSend = new FormData()
+      formDataToSend.append('title', data.title.trim())
+      formDataToSend.append('description', data.description.trim())
+      formDataToSend.append('price', data.price.trim())
+      formDataToSend.append('image', data.image) // Note: 'image' not 'file'
+
       const response = await fetch('/api/artisan/products', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(productData),
+        body: formDataToSend, // Don't set Content-Type header - let browser set it
       })
       
       if (!response.ok) {
@@ -76,25 +79,31 @@ export default function DashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artisan-products'] })
-      setIsDialogOpen(false)
-      setFormData({
-        title: "",
-        description: "",
-        price: "",
-        imageUrl: ""
-      })
-      setError("")
-      setSelectedFile(null)
-      setImagePreview(null)
-      setIsUploading(false)
+      handleCloseDialog()
       toast.success("Product created successfully!")
     },
     onError: (error: Error) => {
       setError(error.message)
       toast.error(error.message)
+      console.error('Create product error:', error)
     }
   })
 
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false)
+    setFormData({
+      title: "",
+      description: "",
+      price: "",
+    })
+    setError("")
+    setSelectedFile(null)
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview)
+    }
+    setImagePreview(null)
+    setIsUploading(false)
+  }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -114,25 +123,15 @@ export default function DashboardPage() {
       setSelectedFile(file)
       setError("")
       
-      // Create preview URL
+      // Clean up previous preview URL
+      if (imagePreview) {
+        URL.revokeObjectURL(imagePreview)
+      }
+      
+      // Create new preview URL
       const previewUrl = URL.createObjectURL(file)
       setImagePreview(previewUrl)
     }
-  }
-
-  const uploadImage = async (file: File): Promise<string> => {
-    const formData = new FormData()
-    formData.append('file', file)
-    
-    // For now, we'll use a simple approach - convert to base64
-    // In a real app, you'd upload to a service like Cloudinary, AWS S3, etc.
-    return new Promise((resolve) => {
-      const reader = new FileReader()
-      reader.onload = () => {
-        resolve(reader.result as string)
-      }
-      reader.readAsDataURL(file)
-    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -140,13 +139,18 @@ export default function DashboardPage() {
     setError("")
 
     // Validation
-    if (!formData.title || !formData.description || !formData.price) {
-      setError("All fields are required")
+    if (!formData.title.trim()) {
+      setError("Product name is required")
       return
     }
 
-    if (!selectedFile && !formData.imageUrl) {
-      setError("Please upload an image or provide an image URL")
+    if (!formData.description.trim()) {
+      setError("Description is required")
+      return
+    }
+
+    if (!formData.price.trim()) {
+      setError("Price is required")
       return
     }
 
@@ -155,18 +159,24 @@ export default function DashboardPage() {
       return
     }
 
+    if (!selectedFile) {
+      setError("Please select an image file")
+      return
+    }
+
     try {
       setIsUploading(true)
       
-      // If a file is selected, upload it first
-      if (selectedFile) {
-        const imageUrl = await uploadImage(selectedFile)
-        formData.imageUrl = imageUrl
-      }
-
-      createProductMutation.mutate(formData)
-    } catch {
-      setError("Failed to upload image. Please try again.")
+      // Submit with FormData
+      createProductMutation.mutate({
+        title: formData.title,
+        description: formData.description,
+        price: formData.price,
+        image: selectedFile
+      })
+    } catch (err) {
+      console.error('Submit error:', err)
+      setError("Failed to create product. Please try again.")
     } finally {
       setIsUploading(false)
     }
@@ -303,8 +313,10 @@ export default function DashboardPage() {
                             type="button"
                             onClick={() => {
                               setSelectedFile(null)
+                              if (imagePreview) {
+                                URL.revokeObjectURL(imagePreview)
+                              }
                               setImagePreview(null)
-                              setFormData({ ...formData, imageUrl: "" })
                             }}
                             className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
                           >
@@ -317,7 +329,6 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-
                     <p className="text-xs text-muted-foreground">
                       Upload an image file (max 5MB)
                     </p>
@@ -327,7 +338,7 @@ export default function DashboardPage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setIsDialogOpen(false)}
+                      onClick={handleCloseDialog}
                       className="flex-1 h-10 sm:h-11 order-2 sm:order-1"
                       disabled={createProductMutation.isPending}
                     >
@@ -336,7 +347,7 @@ export default function DashboardPage() {
                     <Button
                       type="submit"
                       className="flex-1 bg-black hover:bg-gray-800 h-10 sm:h-11 order-1 sm:order-2"
-                      disabled={createProductMutation.isPending || isUploading}
+                      disabled={createProductMutation.isPending || isUploading || !selectedFile}
                     >
                       {isUploading ? "Uploading..." : createProductMutation.isPending ? "Creating..." : "Create Product"}
                     </Button>

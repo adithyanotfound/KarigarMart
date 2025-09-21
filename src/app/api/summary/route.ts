@@ -15,13 +15,11 @@ async function summarizeText(text: string) {
 
     const result = await model.generateContent([
       {
-        text: `You are a professional writer. Create a concise, informative "About Artisan" section that captures the key points and main ideas from the provided text.
-
-Please provide a comprehensive "About Artisan" for the following text:
-
+        text: `You are a professional paraphraser. Paraphrase the following text into a clear, informative section that captures all key points and main ideas. The paraphrased text will be used for marketing so make sure it attracts the reader. Include every important detail, but do not add personal opinions or extra commentary.
+Text:
 ${text}
 
-IMPORTANT: Only return the summary, do not return anything else.`
+IMPORTANT: Only return the paraphrased section, do not return anything else.`
       }
     ])
 

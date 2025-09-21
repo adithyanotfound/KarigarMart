@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { Plus, Package, DollarSign, Eye, ArrowLeft } from "lucide-react"
+import { Plus, Package, DollarSign, Eye, ArrowLeft, Mic, Play, Square, Trash2, RotateCcw, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -49,6 +49,17 @@ export default function DashboardPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  
+  // Voice input state
+  const [isRecording, setIsRecording] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [recordingDuration, setRecordingDuration] = useState(0)
+  const [useVoiceInput, setUseVoiceInput] = useState(true)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const recordingStartTime = useRef<number | null>(null)
 
   const { data, isLoading, error: fetchError } = useQuery({
     queryKey: ['artisan-products'],
@@ -103,6 +114,17 @@ export default function DashboardPage() {
     }
     setImagePreview(null)
     setIsUploading(false)
+    
+    // Reset voice input state
+    setUseVoiceInput(false)
+    setAudioBlob(null)
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+    }
+    setAudioUrl(null)
+    setRecordingDuration(0)
+    setIsRecording(false)
+    setIsPlaying(false)
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +156,122 @@ export default function DashboardPage() {
     }
   }
 
+  // Voice recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+
+      const audioChunks: BlobPart[] = []
+      
+      mediaRecorder.ondataavailable = (event) => {
+        audioChunks.push(event.data)
+      }
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
+        setAudioBlob(audioBlob)
+        const url = URL.createObjectURL(audioBlob)
+        setAudioUrl(url)
+        stream.getTracks().forEach(track => track.stop())
+        toast.success("Recording completed!")
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      recordingStartTime.current = Date.now()
+      setRecordingDuration(0)
+      toast.info("Recording started...")
+    } catch (error) {
+      toast.error("Could not access microphone. Please check permissions.")
+      console.error('Error accessing microphone:', error)
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      if (recordingStartTime.current) {
+        const duration = Math.round((Date.now() - recordingStartTime.current) / 1000)
+        setRecordingDuration(duration)
+      }
+    }
+  }
+
+  const playAudio = () => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play()
+      setIsPlaying(true)
+    }
+  }
+
+  const stopAudio = () => {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      setIsPlaying(false)
+    }
+  }
+
+  const handleAudioEnded = () => {
+    setIsPlaying(false)
+  }
+
+  const deleteAudio = () => {
+    setAudioBlob(null)
+    setAudioUrl(null)
+    setRecordingDuration(0)
+    setIsPlaying(false)
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    toast.success("Audio recording deleted")
+  }
+
+  const reRecordAudio = () => {
+    deleteAudio()
+    toast.info("Ready to record again. Click 'Start Recording' when ready.")
+  }
+
+  const processAudioToText = async (audioBlob: Blob): Promise<string> => {
+    const formData = new FormData()
+    formData.append('audio', audioBlob, 'recording.wav')
+
+    const response = await fetch('/api/tts', {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to transcribe audio')
+    }
+
+    const data = await response.json()
+    return data.transcription
+  }
+
+  const generateSummary = async (text: string): Promise<string> => {
+    const response = await fetch('/api/summary', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ text }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to generate summary')
+    }
+
+    const data = await response.json()
+    return data.summary
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
@@ -144,8 +282,8 @@ export default function DashboardPage() {
       return
     }
 
-    if (!formData.description.trim()) {
-      setError("Description is required")
+    if (!formData.description.trim() && !audioBlob) {
+      setError("Description is required or record a voice description")
       return
     }
 
@@ -167,10 +305,64 @@ export default function DashboardPage() {
     try {
       setIsUploading(true)
       
+      let finalDescription = formData.description
+
+      // Process voice input if available
+      if (audioBlob) {
+        toast.info("Processing voice description...")
+        try {
+          const transcription = await processAudioToText(audioBlob)
+          if (transcription.trim()) {
+            // Use audio transcription as the description
+            finalDescription = transcription
+            toast.success("Voice description transcribed successfully!")
+            
+            // Enhance description using summary endpoint
+            try {
+              toast.info("Enhancing description...")
+              const enhancedDescription = await generateSummary(finalDescription)
+              if (enhancedDescription.trim()) {
+                finalDescription = enhancedDescription
+                toast.success("Description enhanced successfully!")
+              }
+            } catch (summaryError) {
+              console.error('Summary generation error:', summaryError)
+              toast.error("Failed to enhance description. Using original transcription.")
+            }
+          } else {
+            // If transcription is empty, fall back to text input
+            if (formData.description.trim()) {
+              finalDescription = formData.description
+              toast.info("No speech detected in voice input. Using text description.")
+            }
+          }
+        } catch (audioError) {
+          console.error('Voice processing error:', audioError)
+          toast.error("Failed to process voice input. Using text description instead.")
+          // Continue with text input if audio processing fails
+          if (formData.description.trim()) {
+            finalDescription = formData.description
+          }
+        }
+      } else if (formData.description.trim()) {
+        // Enhance text description if no voice input
+        try {
+          toast.info("Enhancing description...")
+          const enhancedDescription = await generateSummary(formData.description)
+          if (enhancedDescription.trim()) {
+            finalDescription = enhancedDescription
+            toast.success("Description enhanced successfully!")
+          }
+        } catch (summaryError) {
+          console.error('Summary generation error:', summaryError)
+          toast.error("Failed to enhance description. Using original text.")
+        }
+      }
+      
       // Submit with FormData
       createProductMutation.mutate({
         title: formData.title,
-        description: formData.description,
+        description: finalDescription,
         price: formData.price,
         image: selectedFile
       })
@@ -190,8 +382,11 @@ export default function DashboardPage() {
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview)
       }
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl)
+      }
     }
-  }, [imagePreview])
+  }, [imagePreview, audioUrl])
 
   // Check if user is an artisan
   if (session && session.user.role !== 'ARTISAN') {
@@ -259,14 +454,168 @@ export default function DashboardPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                    <Textarea
-                      id="description"
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="Describe your product..."
-                      className="min-h-[100px] sm:min-h-[120px] resize-none"
-                      disabled={createProductMutation.isPending}
-                    />
+                    
+                    {/* Input Method Selection */}
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium text-gray-600 mb-2">Choose input method:</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          variant={!useVoiceInput ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setUseVoiceInput(false)}
+                          disabled={createProductMutation.isPending}
+                          className={`flex items-center gap-2 h-10 ${
+                            !useVoiceInput 
+                              ? "bg-black hover:bg-gray-800 text-white" 
+                              : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          Text Input
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={useVoiceInput ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setUseVoiceInput(true)}
+                          disabled={createProductMutation.isPending}
+                          className={`flex items-center gap-2 h-10 ${
+                            useVoiceInput 
+                              ? "bg-black hover:bg-gray-800 text-white" 
+                              : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Mic size={16} />
+                          Voice Input
+                        </Button>
+                      </div>
+                      <div className="text-xs text-muted-foreground text-center">
+                        {useVoiceInput ? "Record your product description" : "Type your product description"}
+                      </div>
+                    </div>
+
+                    {useVoiceInput ? (
+                      <div className="space-y-3">
+                        {/* Voice Recording Controls */}
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          {!isRecording ? (
+                            <Button
+                              type="button"
+                              variant={audioBlob ? "secondary" : "outline"}
+                              onClick={startRecording}
+                              disabled={createProductMutation.isPending}
+                              className={`flex items-center gap-2 ${audioBlob ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}`}
+                            >
+                              <Mic size={16} />
+                              {audioBlob ? "Record Again" : "Start Recording"}
+                            </Button>
+                          ) : (
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={stopRecording}
+                              disabled={createProductMutation.isPending}
+                              className="flex items-center gap-2"
+                            >
+                              <Square size={16} />
+                              Stop Recording
+                            </Button>
+                          )}
+                          
+                          {audioUrl && (
+                            <div className="flex items-center gap-2">
+                              {!isPlaying ? (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={playAudio}
+                                  disabled={createProductMutation.isPending}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Play size={14} />
+                                  Play
+                                </Button>
+                              ) : (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={stopAudio}
+                                  disabled={createProductMutation.isPending}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Square size={14} />
+                                  Stop
+                                </Button>
+                              )}
+                              <span className="text-sm text-muted-foreground">
+                                {isRecording ? "Recording..." : `Audio recorded (${recordingDuration}s)`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Audio Management Controls */}
+                        {audioUrl && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-md">
+                              <CheckCircle size={16} />
+                              <span>Voice description recorded ({recordingDuration}s)</span>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={reRecordAudio}
+                                disabled={createProductMutation.isPending || isRecording}
+                                className="flex items-center gap-2 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                              >
+                                <RotateCcw size={14} />
+                                Re-record
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={deleteAudio}
+                                disabled={createProductMutation.isPending || isRecording}
+                                className="flex items-center gap-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 size={14} />
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {audioUrl && (
+                          <audio
+                            ref={audioRef}
+                            src={audioUrl}
+                            onEnded={handleAudioEnded}
+                            className="hidden"
+                          />
+                        )}
+                        
+                        <p className="text-xs text-muted-foreground">
+                          Voice input will be automatically transcribed and enhanced for better product descriptions.
+                        </p>
+                      </div>
+                    ) : (
+                      <Textarea
+                        id="description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Describe your product..."
+                        className="min-h-[100px] sm:min-h-[120px] resize-none"
+                        disabled={createProductMutation.isPending}
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">

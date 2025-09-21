@@ -33,6 +33,7 @@ export default function OnboardingPage() {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [recordingDuration, setRecordingDuration] = useState(0)
+  const [isTranscribingAbout, setIsTranscribingAbout] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const recordingStartTime = useRef<number | null>(null)
@@ -43,6 +44,7 @@ export default function OnboardingPage() {
   const [storyAudioBlob, setStoryAudioBlob] = useState<Blob | null>(null)
   const [storyAudioUrl, setStoryAudioUrl] = useState<string | null>(null)
   const [storyRecordingDuration, setStoryRecordingDuration] = useState(0)
+  const [isTranscribingStory, setIsTranscribingStory] = useState(false)
   const storyMediaRecorderRef = useRef<MediaRecorder | null>(null)
   const storyAudioRef = useRef<HTMLAudioElement | null>(null)
   const storyRecordingStartTime = useRef<number | null>(null)
@@ -93,13 +95,30 @@ export default function OnboardingPage() {
         audioChunks.push(event.data)
       }
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
         setAudioBlob(audioBlob)
         const url = URL.createObjectURL(audioBlob)
         setAudioUrl(url)
         stream.getTracks().forEach(track => track.stop())
         toast.success("Recording completed!")
+        
+        // Immediately transcribe the audio
+        setIsTranscribingAbout(true)
+        try {
+          const transcription = await processAudioToText(audioBlob)
+          if (transcription.trim()) {
+            setFormData(prev => ({ ...prev, about: transcription }))
+            toast.success("Audio transcribed and added to text field!")
+          } else {
+            toast.info("No speech detected in the recording.")
+          }
+        } catch (error) {
+          console.error('Transcription error:', error)
+          toast.error("Failed to transcribe audio. You can still type manually.")
+        } finally {
+          setIsTranscribingAbout(false)
+        }
       }
 
       mediaRecorder.start()
@@ -113,7 +132,7 @@ export default function OnboardingPage() {
     }
   }
 
-  const stopRecording = () => {
+  const stopRecording = async () => {
     if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop()
       setIsRecording(false)
@@ -174,13 +193,30 @@ export default function OnboardingPage() {
         audioChunks.push(event.data)
       }
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' })
         setStoryAudioBlob(audioBlob)
         const url = URL.createObjectURL(audioBlob)
         setStoryAudioUrl(url)
         stream.getTracks().forEach(track => track.stop())
         toast.success("Story recording completed!")
+        
+        // Immediately transcribe the audio
+        setIsTranscribingStory(true)
+        try {
+          const transcription = await processAudioToText(audioBlob)
+          if (transcription.trim()) {
+            setFormData(prev => ({ ...prev, story: transcription }))
+            toast.success("Story audio transcribed and added to text field!")
+          } else {
+            toast.info("No speech detected in the story recording.")
+          }
+        } catch (error) {
+          console.error('Story transcription error:', error)
+          toast.error("Failed to transcribe story audio. You can still type manually.")
+        } finally {
+          setIsTranscribingStory(false)
+        }
       }
 
       mediaRecorder.start()
@@ -194,7 +230,7 @@ export default function OnboardingPage() {
     }
   }
 
-  const stopStoryRecording = () => {
+  const stopStoryRecording = async () => {
     if (storyMediaRecorderRef.current && isStoryRecording) {
       storyMediaRecorderRef.current.stop()
       setIsStoryRecording(false)
@@ -298,57 +334,11 @@ export default function OnboardingPage() {
       let finalAbout = formData.about
       let finalStory = formData.story
 
-      // Process about audio (audio takes priority over text input)
-      if (audioBlob) {
-        toast.info("Processing about audio...")
-        try {
-          const transcription = await processAudioToText(audioBlob)
-          if (transcription.trim()) {
-            // Use audio transcription as the about text
-            finalAbout = transcription
-            toast.success("About audio transcribed successfully!")
-          } else {
-            // If transcription is empty, fall back to text input
-            if (formData.about.trim()) {
-              finalAbout = formData.about
-              toast.info("No speech detected in about audio. Using text input.")
-            }
-          }
-        } catch (audioError) {
-          console.error('About audio processing error:', audioError)
-          toast.error("Failed to process about audio. Using text input instead.")
-          // Continue with text input if audio processing fails
-          if (formData.about.trim()) {
-            finalAbout = formData.about
-          }
-        }
-      }
+      // Use the text from formData (which now includes transcribed audio)
+      finalAbout = formData.about
 
-      // Process story audio (audio takes priority over text input)
-      if (storyAudioBlob) {
-        toast.info("Processing story audio...")
-        try {
-          const transcription = await processAudioToText(storyAudioBlob)
-          if (transcription.trim()) {
-            // Use audio transcription as the story text
-            finalStory = transcription
-            toast.success("Story audio transcribed successfully!")
-          } else {
-            // If transcription is empty, fall back to text input
-            if (formData.story.trim()) {
-              finalStory = formData.story
-              toast.info("No speech detected in story audio. Using text input.")
-            }
-          }
-        } catch (audioError) {
-          console.error('Story audio processing error:', audioError)
-          toast.error("Failed to process story audio. Using text input instead.")
-          // Continue with text input if audio processing fails
-          if (formData.story.trim()) {
-            finalStory = formData.story
-          }
-        }
-      }
+      // Use the text from formData (which now includes transcribed audio)
+      finalStory = formData.story
 
       // If we have text (either from input or audio), generate summary for about
       if (finalAbout.trim()) {
@@ -551,7 +541,7 @@ export default function OnboardingPage() {
                   <div className="space-y-3">
                     <Label>Audio Recording (Recommended)</Label>
                     <p className="text-sm text-muted-foreground">
-                      Record an audio message to tell your story in your own voice. This will be automatically transcribed and professionally rephrased.
+                      Record an audio message to tell your story in your own voice. This will be automatically transcribed and added to the text field below.
                     </p>
                     
                     <div className="space-y-3">
@@ -562,7 +552,7 @@ export default function OnboardingPage() {
                             type="button"
                             variant={audioBlob ? "secondary" : "outline"}
                             onClick={startRecording}
-                            disabled={isLoading}
+                            disabled={isLoading || isTranscribingAbout}
                             className={`flex items-center gap-2 ${audioBlob ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}`}
                           >
                             <Mic size={16} />
@@ -573,7 +563,7 @@ export default function OnboardingPage() {
                             type="button"
                             variant="destructive"
                             onClick={stopRecording}
-                            disabled={isLoading}
+                            disabled={isLoading || isTranscribingAbout}
                             className="flex items-center gap-2"
                           >
                             <Square size={16} />
@@ -589,7 +579,7 @@ export default function OnboardingPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={playAudio}
-                                disabled={isLoading}
+                                disabled={isLoading || isTranscribingAbout}
                                 className="flex items-center gap-2"
                               >
                                 <Play size={14} />
@@ -601,7 +591,7 @@ export default function OnboardingPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={stopAudio}
-                                disabled={isLoading}
+                                disabled={isLoading || isTranscribingAbout}
                                 className="flex items-center gap-2"
                               >
                                 <Square size={14} />
@@ -609,7 +599,7 @@ export default function OnboardingPage() {
                               </Button>
                             )}
                             <span className="text-sm text-muted-foreground">
-                              {isRecording ? "Recording..." : `Audio recorded (${recordingDuration}s)`}
+                              {isRecording ? "Recording..." : isTranscribingAbout ? "Transcribing..." : `Audio recorded (${recordingDuration}s)`}
                             </span>
                           </div>
                         )}
@@ -671,7 +661,7 @@ export default function OnboardingPage() {
                       disabled={isLoading}
                     />
                     <p className="text-xs text-muted-foreground">
-                      {audioBlob ? "Audio recording will be used instead of this text. You can delete the audio above to use this text instead." : "This text will be professionally rephrased before saving."}
+                      {audioBlob ? "Audio has been transcribed above. You can edit this text or delete the audio to start over." : "This text will be professionally rephrased before saving."}
                     </p>
                   </div>
                 </div>
@@ -695,7 +685,7 @@ export default function OnboardingPage() {
                   <div className="space-y-3">
                     <Label>Audio Recording (Recommended)</Label>
                     <p className="text-sm text-muted-foreground">
-                      Record an audio message to tell your story in your own voice. This will be automatically transcribed.
+                      Record an audio message to tell your story in your own voice. This will be automatically transcribed and added to the text field below.
                     </p>
                     
                     <div className="space-y-3">
@@ -706,7 +696,7 @@ export default function OnboardingPage() {
                             type="button"
                             variant={storyAudioBlob ? "secondary" : "outline"}
                             onClick={startStoryRecording}
-                            disabled={isLoading}
+                            disabled={isLoading || isTranscribingStory}
                             className={`flex items-center gap-2 ${storyAudioBlob ? "bg-orange-100 text-orange-700 hover:bg-orange-200" : ""}`}
                           >
                             <Mic size={16} />
@@ -717,7 +707,7 @@ export default function OnboardingPage() {
                             type="button"
                             variant="destructive"
                             onClick={stopStoryRecording}
-                            disabled={isLoading}
+                            disabled={isLoading || isTranscribingStory}
                             className="flex items-center gap-2"
                           >
                             <Square size={16} />
@@ -733,7 +723,7 @@ export default function OnboardingPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={playStoryAudio}
-                                disabled={isLoading}
+                                disabled={isLoading || isTranscribingStory}
                                 className="flex items-center gap-2"
                               >
                                 <Play size={14} />
@@ -745,7 +735,7 @@ export default function OnboardingPage() {
                                 variant="outline"
                                 size="sm"
                                 onClick={stopStoryAudio}
-                                disabled={isLoading}
+                                disabled={isLoading || isTranscribingStory}
                                 className="flex items-center gap-2"
                               >
                                 <Square size={14} />
@@ -753,7 +743,7 @@ export default function OnboardingPage() {
                               </Button>
                             )}
                             <span className="text-sm text-muted-foreground">
-                              {isStoryRecording ? "Recording..." : `Audio recorded (${storyRecordingDuration}s)`}
+                              {isStoryRecording ? "Recording..." : isTranscribingStory ? "Transcribing..." : `Audio recorded (${storyRecordingDuration}s)`}
                             </span>
                           </div>
                         )}
@@ -815,7 +805,7 @@ export default function OnboardingPage() {
                       disabled={isLoading}
                     />
                     <p className="text-xs text-muted-foreground">
-                      {storyAudioBlob ? "Audio recording will be used instead of this text. You can delete the audio above to use this text instead." : "This will be displayed on your products to help customers connect with your work."}
+                      {storyAudioBlob ? "Story audio has been transcribed above. You can edit this text or delete the audio to start over." : "This will be displayed on your products to help customers connect with your work."}
                     </p>
                   </div>
                 </div>

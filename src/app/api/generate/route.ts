@@ -12,22 +12,18 @@ const LOCATION_ID = process.env.LOCATION_ID;
 const MODEL_ID = process.env.MODEL_ID;
 const API_ENDPOINT = process.env.API_ENDPOINT;
 
-
 const ENC_PATH = path.join(process.cwd(), "service-account.json.enc");
 const DEC_PATH = path.join(process.cwd(), "service-account.json");
+const password = process.env.ENCRYPT_PASSWORD!;
+if (!password) throw new Error("ENCRYPT_PASSWORD not set");
 
 function decryptServiceAccount() {
-  const password = process.env.SERVICE_ACCOUNT_KEY;
-  if (!password) throw new Error("SERVICE_ACCOUNT_KEY is not set");
-
   const encryptedData = fs.readFileSync(ENC_PATH);
-
-  // Derive key and IV (32 bytes key, 16 bytes IV)
-  const key = crypto.pbkdf2Sync(password, 'salt', 100000, 32, 'sha256');
-  const iv = encryptedData.slice(0, 16); // assume IV is stored in first 16 bytes
+  const iv = encryptedData.slice(0, 16); // first 16 bytes
   const ciphertext = encryptedData.slice(16);
 
-  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+  const key = crypto.scryptSync(password, "salt", 32);
+  const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
   const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
   fs.writeFileSync(DEC_PATH, decrypted);
@@ -142,10 +138,14 @@ export async function POST(request: Request) {
         fs.unlinkSync(filePath);
 
         // Step 6: Respond with uploaded video URL
+        const videoUrl = (uploadResponse as any)?.data?.data?.url || null;
+        console.log('Upload response:', uploadResponse); // Debug log
+        console.log('Extracted video URL:', videoUrl); // Debug log
+        
         return NextResponse.json({
             message: "Video generated and uploaded successfully",
             uploadResponse: (uploadResponse as any)?.data,
-            url: (uploadResponse as any)?.data?.url || null,
+            url: videoUrl,
         });
 
     } catch (err) {

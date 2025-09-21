@@ -78,12 +78,11 @@ export async function POST(request: NextRequest) {
     // Parse form data
     const formData = await request.formData()
     const title = formData.get("title") as string
-    const description = formData.get("description") as string
     const price = formData.get("price") as string
     const imageFile = formData.get("image") as File
 
-    if (!title || !description || !price || !imageFile) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
+    if (!title || !price || !imageFile) {
+      return NextResponse.json({ error: "Title, price, and image are required" }, { status: 400 })
     }
 
     if (isNaN(Number(price)) || Number(price) <= 0) {
@@ -126,39 +125,88 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Pick a default video
-    const defaultVideoUrls = [
-      "https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/3f42e166-6ce9-47f0-a4b9-6cf1cbbddc1c.mp4",
-      "https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/4be137dc-5450-43e3-a98b-57206a3e6360.mp4",
-      "https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/2f185801-a7b3-4548-822e-1cc16aa478fd.mp4",
-      "https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/ae41b08a-794c-4131-93e5-d0a82f6df682.mp4",
-      "https://files.edgestore.dev/t2h0nztfikica7r2/advAutomation/_public/7985448e-5b0c-42fa-ad02-2e924d9ace90.mp4",
-    ]
-    const randomVideoUrl = defaultVideoUrls[Math.floor(Math.random() * defaultVideoUrls.length)]
+    // -----------------------------
+    // Generate description and narration using AI
+    // -----------------------------
+    const descriptionForm = new FormData()
+    descriptionForm.append("image", imageFile)
+    descriptionForm.append("productName", title)
+
+    const descriptionResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/description`, {
+      method: 'POST',
+      body: descriptionForm,
+    })
+
+    const descriptionResult = await descriptionResponse.json()
+
+    if (!descriptionResult.success) {
+      return NextResponse.json(
+        { error: `Failed to generate description: ${descriptionResult.error}` },
+        { status: 500 }
+      )
+    }
+
+    const generatedDescription = descriptionResult.description
+    const narration = descriptionResult.narration
+
+    // -----------------------------
+    // Generate video using the narration
+    // -----------------------------
+    const generateResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/generate`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt: narration }),
+    })
+
+    const generateResult = await generateResponse.json()
+    console.log('Generate result:', generateResult) // Debug log
+
+    if (!generateResult.uploadResponse.data.url || !generateResult.url) {
+      console.error('No video URL in generate result:', generateResult)
+      return NextResponse.json(
+        { error: "Failed to generate video advertisement" },
+        { status: 500 }
+      )
+    }
+
+    const videoUrl = generateResult.uploadResponse.data.url || generateResult.url
+    console.log('Video URL:', videoUrl) // Debug log
 
     // Create product in Prisma
-    const product = await prisma.product.create({
-      data: {
-        title,
-        description,
-        price: Number(price),
-        imageUrl,
-        videoUrl: randomVideoUrl,
-        artisanId: user.artisanProfile.id,
-      },
-      include: {
-        artisan: {
-          include: {
-            user: {
-              select: { name: true },
+    let product
+    try {
+      product = await prisma.product.create({
+        data: {
+          title,
+          description: generatedDescription,
+          price: Number(price),
+          imageUrl,
+          videoUrl,
+          artisanId: user.artisanProfile.id,
+        },
+        include: {
+          artisan: {
+            include: {
+              user: {
+                select: { name: true },
+              },
             },
           },
         },
-      },
-    })
+      })
+      console.log('Product created successfully:', product.id) // Debug log
+    } catch (dbError: any) {
+      console.error('Database error creating product:', dbError)
+      return NextResponse.json(
+        { error: `Database error: ${dbError.message || 'Unknown database error'}` },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
-      message: "Product created successfully",
+      message: "Product created successfully with AI-generated description and custom video advertisement",
       product,
     })
   } catch (error) {

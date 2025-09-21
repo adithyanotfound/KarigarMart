@@ -5,11 +5,36 @@ import FormData from "form-data";
 import axios from "axios";
 import { NextResponse } from "next/server";
 import { GoogleAuth } from "google-auth-library";
+import crypto from "crypto";
 
 const PROJECT_ID = process.env.PROJECT_ID;
 const LOCATION_ID = process.env.LOCATION_ID;
 const MODEL_ID = process.env.MODEL_ID;
 const API_ENDPOINT = process.env.API_ENDPOINT;
+
+
+const ENC_PATH = path.join(process.cwd(), "service-account.json.enc");
+const DEC_PATH = path.join(process.cwd(), "service-account.json");
+
+function decryptServiceAccount() {
+  const password = process.env.SERVICE_ACCOUNT_KEY;
+  if (!password) throw new Error("SERVICE_ACCOUNT_KEY is not set");
+
+  const encryptedData = fs.readFileSync(ENC_PATH);
+
+  // Derive key and IV (32 bytes key, 16 bytes IV)
+  const key = crypto.pbkdf2Sync(password, 'salt', 100000, 32, 'sha256');
+  const iv = encryptedData.slice(0, 16); // assume IV is stored in first 16 bytes
+  const ciphertext = encryptedData.slice(16);
+
+  const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
+  const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+
+  fs.writeFileSync(DEC_PATH, decrypted);
+  return DEC_PATH;
+}
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = decryptServiceAccount();
 
 const auth = new GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/cloud-platform"],

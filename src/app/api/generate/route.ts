@@ -90,6 +90,7 @@ export async function POST(request: Request) {
                 resolution: "720p",
                 enhancePrompt: true,
                 sampleCount: 1,
+                addWatermark: true,
             },
         };
 

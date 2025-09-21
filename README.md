@@ -2,30 +2,30 @@
 
 A comprehensive Next.js-based artisan marketplace platform featuring video-first product showcases, AI-powered content processing, and secure authentication. Built with modern web technologies and designed for scalability.
 
-## 🚀 Features
+## Features
 
 ### Core Features
-- **🎨 Artisan Onboarding**: Complete profile setup with optional audio recording support
-- **🤖 AI-Powered Content Processing**: Automatic transcription and professional text enhancement
-- **📹 Video-First Product Showcase**: Upload and display products with rich video content
-- **🔐 Secure Authentication**: NextAuth.js integration with role-based access control
-- **🛒 Shopping Cart**: Add products to cart and manage purchases
-- **📱 Responsive Design**: Modern UI with Tailwind CSS and Framer Motion animations
-- **📱 PWA Support**: Progressive Web App capabilities with offline support
+- **Artisan Onboarding**: Complete profile setup with optional audio recording support
+- **AI-Powered Content Processing**: Automatic transcription and professional text enhancement
+- **Video-First Product Showcase**: Upload and display products with rich video content
+- **Secure Authentication**: NextAuth.js integration with role-based access control
+- **Shopping Cart**: Add products to cart and manage purchases
+- **Responsive Design**: Modern UI with Tailwind CSS and Framer Motion animations
+- **PWA Support**: Progressive Web App capabilities with offline support
 
 ### AI Features
-- **🎤 Speech-to-Text**: Convert audio recordings to text using Deepgram AI
-- **✍️ Text Enhancement**: Automatically rephrase and improve artisan descriptions using Google Gemini
-- **🎯 Smart Onboarding**: Optional audio recording for more natural profile creation
+- **Speech-to-Text**: Convert audio recordings to text using Deepgram AI
+- **Text Enhancement**: Automatically rephrase and improve artisan descriptions using Google Gemini
+- **Smart Onboarding**: Optional audio recording for more natural profile creation
 
 ### Technical Features
-- **🗄️ Database**: PostgreSQL with Prisma ORM
-- **☁️ File Storage**: Cloudinary integration for images and videos
-- **🔒 Security**: Password hashing with bcrypt, JWT sessions
-- **📊 State Management**: React Query for server state management
-- **🎨 UI Components**: Radix UI components with custom styling
+- **Database**: PostgreSQL with Prisma ORM
+- **File Storage**: Cloudinary integration for images and videos
+- **Security**: Password hashing with bcrypt, JWT sessions
+- **State Management**: React Query for server state management
+- **UI Components**: Radix UI components with custom styling
 
-## 🏗️ Architecture
+## Architecture
 
 ### User Flow
 
@@ -41,7 +41,7 @@ A comprehensive Next.js-based artisan marketplace platform featuring video-first
 - **Role-Based Access**: Different user roles (USER, ARTISAN) have different access levels
 - **Session Management**: Secure authentication with NextAuth.js
 
-## 🛠️ Prerequisites
+## Prerequisites
 
 Before you begin, ensure you have the following installed:
 
@@ -65,7 +65,7 @@ You'll need accounts and API keys for the following services:
    - Visit [Cloudinary Dashboard](https://cloudinary.com/console)
    - Get your Cloud Name, API Key, and API Secret
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 Create a `.env.local` file in the root directory with the following variables:
 
@@ -98,7 +98,7 @@ CLOUDINARY_API_SECRET="your-cloudinary-api-secret"
 - **DEEPGRAM_API_KEY**: Deepgram API key for speech recognition
 - **CLOUDINARY_***: Cloudinary credentials for file storage
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### 1. Clone the Repository
 
@@ -144,7 +144,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-## 📚 API Documentation
+## API Documentation
 
 ### Authentication Endpoints
 
@@ -257,7 +257,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 - **Body**: `{ name: string, email: string }`
 - **Response**: `{ success: boolean, user: User }`
 
-## 🗄️ Database Schema
+## Database Schema
 
 ### Models
 
@@ -321,84 +321,13 @@ model CartItem {
 }
 ```
 
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. **Connect your repository to Vercel**
-2. **Set environment variables** in Vercel dashboard
-3. **Deploy**: Vercel will automatically deploy on push to main branch
-
-### Docker Deployment
-
-```dockerfile
-# Dockerfile
-FROM node:18-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-
-RUN npx prisma generate
-RUN npm run build
-
-# Production image, copy all the files and run next
-FROM base AS runner
-WORKDIR /app
-
-ENV NODE_ENV production
-
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-USER nextjs
-
-EXPOSE 3000
-
-ENV PORT 3000
-
-CMD ["node", "server.js"]
-```
-
-### Manual Deployment
-
-1. **Build the application**:
-   ```bash
-   npm run build
-   ```
-
-2. **Set up production database**:
-   ```bash
-   npx prisma migrate deploy
-   ```
-
-3. **Start the production server**:
-   ```bash
-   npm start
-   ```
-
-## 🧪 Development
+## Development
 
 ### Available Scripts
 
-- `npm run dev` - Start development server with Turbopack
-- `npm run build` - Build for production with Turbopack
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
 - `npm start` - Start production server
-- `npm run lint` - Run ESLint (currently disabled)
 - `npm run db:seed` - Seed the database with initial data
 
 ### Database Management
@@ -416,8 +345,6 @@ npx prisma migrate reset
 # View database in Prisma Studio
 npx prisma studio
 
-# Deploy migrations to production
-npx prisma migrate deploy
 ```
 
 ### Code Structure
@@ -438,7 +365,7 @@ src/
 └── types/                # TypeScript type definitions
 ```
 
-## 🔧 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -459,29 +386,3 @@ src/
 4. **Authentication Issues**
    - Check NEXTAUTH_SECRET is set
    - Verify NEXTAUTH_URL matches your domain
-
-### Getting Help
-
-- Check the [Issues](https://github.com/your-repo/issues) page
-- Review the [Next.js Documentation](https://nextjs.org/docs)
-- Check [Prisma Documentation](https://www.prisma.io/docs)
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 📞 Support
-
-For support, email support@karigarmart.com or join our Discord community.
-
----
-
-**Built with ❤️ using Next.js, Prisma, and modern web technologies.**

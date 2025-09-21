@@ -88,6 +88,7 @@ export async function POST(request: Request) {
                 generateAudio: true,
                 personGeneration: "allow_adult",
                 resolution: "720p",
+                enhancePrompt: true,
                 sampleCount: 1,
             },
         };

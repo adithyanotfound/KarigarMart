@@ -13,11 +13,12 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { AuthGuard } from "@/components/auth-guard"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 export default function OnboardingPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -392,13 +393,17 @@ export default function OnboardingPage() {
       }
 
       toast.success("Profile created successfully!")
+      
+      // Invalidate the onboarding status query cache to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['artisan-onboarding-status'] })
+      
       // Move to success step
       setCurrentStep(totalSteps + 1)
       
-      // Redirect to dashboard after 2 seconds
+      // Redirect to dashboard after 1.5 seconds (shorter delay for better UX)
       setTimeout(() => {
         router.push('/dashboard')
-      }, 2000)
+      }, 1500)
     } catch {
       setError("An error occurred. Please try again.")
       toast.error("An error occurred. Please try again.")

@@ -1,4 +1,3 @@
-import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 import FormData from "form-data";
@@ -13,26 +12,26 @@ const MODEL_ID = process.env.MODEL_ID;
 const API_ENDPOINT = process.env.API_ENDPOINT;
 
 const ENC_PATH = path.join(process.cwd(), "service-account.json.enc");
-const DEC_PATH = path.join(process.cwd(), "service-account.json");
 const password = process.env.ENCRYPT_PASSWORD!;
 if (!password) throw new Error("ENCRYPT_PASSWORD not set");
 
 function decryptServiceAccount() {
   const encryptedData = fs.readFileSync(ENC_PATH);
-  const iv = encryptedData.slice(0, 16); // first 16 bytes
+  const iv = encryptedData.slice(0, 16);
   const ciphertext = encryptedData.slice(16);
 
   const key = crypto.scryptSync(password, "salt", 32);
   const decipher = crypto.createDecipheriv("aes-256-cbc", key, iv);
   const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
-  fs.writeFileSync(DEC_PATH, decrypted);
-  return DEC_PATH;
+  // Parse JSON directly in memory
+  return JSON.parse(decrypted.toString("utf-8"));
 }
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS = decryptServiceAccount();
+const serviceAccount = decryptServiceAccount();
 
 const auth = new GoogleAuth({
+    credentials: serviceAccount,
     scopes: ["https://www.googleapis.com/auth/cloud-platform"],
 });
 

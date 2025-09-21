@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [showExitWarning, setShowExitWarning] = useState(false)
 
   const { data, isLoading, error: fetchError } = useQuery({
     queryKey: ['artisan-products'],
@@ -76,17 +77,24 @@ export default function DashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artisan-products'] })
+      setShowExitWarning(false)
       handleCloseDialog()
       toast.success("Product created successfully!")
     },
     onError: (error: Error) => {
       setError(error.message)
+      setShowExitWarning(false)
       toast.error(error.message)
       console.error('Create product error:', error)
     }
   })
 
   const handleCloseDialog = () => {
+    if (createProductMutation.isPending || isUploading) {
+      // Don't allow closing during creation
+      return
+    }
+    
     setIsDialogOpen(false)
     setFormData({
       title: "",
@@ -99,6 +107,7 @@ export default function DashboardPage() {
     }
     setImagePreview(null)
     setIsUploading(false)
+    setShowExitWarning(false)
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +167,7 @@ export default function DashboardPage() {
 
     try {
       setIsUploading(true)
+      setShowExitWarning(true)
       
       // Submit with FormData - AI will generate description and video
       createProductMutation.mutate({
@@ -168,6 +178,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Submit error:', err)
       setError("Failed to create product. Please try again.")
+      setShowExitWarning(false)
     } finally {
       setIsUploading(false)
     }
@@ -183,6 +194,25 @@ export default function DashboardPage() {
       }
     }
   }, [imagePreview])
+
+  // Add beforeunload warning when creating product
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (showExitWarning) {
+        e.preventDefault()
+        e.returnValue = 'Your product is being created. Are you sure you want to leave? Your changes may not be saved.'
+        return 'Your product is being created. Are you sure you want to leave? Your changes may not be saved.'
+      }
+    }
+
+    if (showExitWarning) {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+    }
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [showExitWarning])
 
   // Check if user is an artisan
   if (session && session.user.role !== 'ARTISAN') {
@@ -324,13 +354,43 @@ export default function DashboardPage() {
                     </p>
                   </div>
 
+                  {/* Loading Message */}
+                  {(createProductMutation.isPending || isUploading) && (
+                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                        <div>
+                          <p className="text-black font-medium">Creating your product...</p>
+                          <p className="text-gray-600 text-sm mt-1">
+                            This process takes approximately 1 minute. Please don't close this window.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Exit Warning */}
+                  {showExitWarning && (
+                    <div className="bg-gray-100 border border-gray-400 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-black">⚠️</div>
+                        <div>
+                          <p className="text-black font-medium">Please don't close this window!</p>
+                          <p className="text-gray-600 text-sm mt-1">
+                            Your product is being created. Closing the window may cause your changes to be lost.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
                     <Button
                       type="button"
                       variant="outline"
                       onClick={handleCloseDialog}
                       className="flex-1 h-10 sm:h-11 order-2 sm:order-1"
-                      disabled={createProductMutation.isPending}
+                      disabled={createProductMutation.isPending || isUploading}
                     >
                       Cancel
                     </Button>

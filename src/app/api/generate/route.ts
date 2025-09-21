@@ -112,20 +112,17 @@ export async function POST(request: Request) {
         // Step 2: Poll until video is ready
         const videoBase64 = await pollForResult(operationName, token);
 
-        // Step 3: Save video locally
-        const uploadDir = path.join(process.cwd(), "uploads");
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir);
-        }
-
+        // Step 3: Upload video directly from memory (no filesystem writes)
         const timestamp = Date.now();
         const fileName = `output-${timestamp}.mp4`;
-        const filePath = path.join(uploadDir, fileName);
-        fs.writeFileSync(filePath, Buffer.from(videoBase64, "base64"));
-
-        // Step 4: Upload to object bucket
+        
+        // Create FormData with video buffer directly
         const form = new FormData();
-        form.append("file", fs.createReadStream(filePath), fileName);
+        const videoBuffer = Buffer.from(videoBase64, "base64");
+        form.append("file", videoBuffer, {
+            filename: fileName,
+            contentType: "video/mp4"
+        });
 
         const uploadResponse = await axios.post(
             `${process.env.UPLOAD_SERVER_URL}/upload`,
@@ -135,10 +132,7 @@ export async function POST(request: Request) {
             }
         );
 
-        // Step 5: Delete local file
-        fs.unlinkSync(filePath);
-
-        // Step 6: Respond with uploaded video URL
+        // Step 4: Respond with uploaded video URL
         const videoUrl = (uploadResponse as any)?.data?.data?.url || null;
         console.log('Upload response:', uploadResponse); // Debug log
         console.log('Extracted video URL:', videoUrl); // Debug log

@@ -40,7 +40,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
     if (videoRef.current) {
       // Apply mute setting
       videoRef.current.muted = isMuted
-      
+
       if (isActive && !isPaused && hasUserInteracted) {
         // Only try to play if user has interacted with the page
         videoRef.current.play().catch((error) => {
@@ -80,7 +80,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
   const handlePlayPause = () => {
     // Mark user as having interacted
     setHasUserInteracted(true)
-    
+
     setIsPaused(!isPaused)
     // Show button temporarily as visual feedback
     setShowPlayPauseButton(true)
@@ -112,23 +112,23 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
 
 
   return (
-    <div 
+    <div
       className="relative h-screen w-full bg-black overflow-hidden"
       onClick={handlePlayPause}
     >
       <video
         ref={videoRef}
         src={product.videoUrl}
-        className="absolute inset-0 w-full h-full object-contain sm:object-cover"
+        className="absolute inset-0 w-full h-full object-contain"
         loop
         muted={isMuted}
         playsInline
         preload="metadata"
       />
-      
+
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-      
+
       {/* Center play/pause button - only show when showPlayPauseButton is true */}
       {showPlayPauseButton && (
         <motion.div
@@ -162,7 +162,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
 
       {/* Product info overlay - hidden when paused */}
       {!isPaused && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: isPaused ? 0 : 1 }}
           transition={{ duration: 0.3 }}
@@ -175,9 +175,14 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
               ${product.price}
             </Badge>
           </div>
-          
+
+          {/* Small cart text */}
+          <p className="text-xs text-white/60 mb-3">
+            The video is for reference only. Please refer to the image for the actual product.
+          </p>
+
           <div className="flex items-center gap-3">
-            <Button 
+            <Button
               size="sm"
               variant="outline"
               className="bg-white/10 backdrop-blur-sm border-white/20 text-white"
@@ -185,7 +190,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
             >
               View Details
             </Button>
-            <Button 
+            <Button
               size="sm"
               className="bg-black hover:bg-gray-800"
               onClick={handleAddToCart}
@@ -199,7 +204,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
 
       {/* Like button - hidden when paused */}
       {!isPaused && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: isPaused ? 0 : 1 }}
           transition={{ duration: 0.3 }}
@@ -208,13 +213,12 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={handleLike}
-            className={`p-3 rounded-full backdrop-blur-sm ${
-              isLiked ? 'bg-red-500' : 'bg-black/20'
-            } transition-colors`}
+            className={`p-3 rounded-full backdrop-blur-sm ${isLiked ? 'bg-red-500' : 'bg-black/20'
+              } transition-colors`}
           >
-            <Heart 
-              size={24} 
-              className={`text-white ${isLiked ? 'fill-white' : ''}`} 
+            <Heart
+              size={24}
+              className={`text-white ${isLiked ? 'fill-white' : ''}`}
             />
           </motion.button>
         </motion.div>
@@ -222,7 +226,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
 
       {/* Swipe indicator - hidden when paused */}
       {!isPaused && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 1 }}
           animate={{ opacity: isPaused ? 0 : 1 }}
           transition={{ duration: 0.3 }}

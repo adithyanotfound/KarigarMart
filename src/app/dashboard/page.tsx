@@ -63,7 +63,7 @@ export default function DashboardPage() {
       formDataToSend.append('price', data.price.trim())
       formDataToSend.append('image', data.image) // Note: 'image' not 'file'
 
-      const response = await fetch('/api/test-product', { // Use test endpoint to avoid AI costs
+      const response = await fetch('/api/artisan/products', {
         method: 'POST',
         body: formDataToSend, // Don't set Content-Type header - let browser set it
       })
@@ -77,12 +77,14 @@ export default function DashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artisan-products'] })
+      setIsUploading(false)
       setShowExitWarning(false)
       handleCloseDialog()
       toast.success("Product created successfully!")
     },
     onError: (error: Error) => {
       setError(error.message)
+      setIsUploading(false)
       setShowExitWarning(false)
       toast.error(error.message)
       console.error('Create product error:', error)
@@ -165,23 +167,15 @@ export default function DashboardPage() {
       return
     }
 
-    try {
-      setIsUploading(true)
-      setShowExitWarning(true)
-      
-      // Submit with FormData - AI will generate description and video
-      createProductMutation.mutate({
-        title: formData.title,
-        price: formData.price,
-        image: selectedFile
-      })
-    } catch (err) {
-      console.error('Submit error:', err)
-      setError("Failed to create product. Please try again.")
-      setShowExitWarning(false)
-    } finally {
-      setIsUploading(false)
-    }
+    setIsUploading(true)
+    setShowExitWarning(true)
+    
+    // Submit with FormData - AI will generate description and video
+    createProductMutation.mutate({
+      title: formData.title,
+      price: formData.price,
+      image: selectedFile
+    })
   }
 
   const products = data?.products || []

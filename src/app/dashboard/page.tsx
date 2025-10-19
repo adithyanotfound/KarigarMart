@@ -1,20 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { Plus, Package, DollarSign, Eye, ArrowLeft, Image as ImageIcon, Sparkles } from "lucide-react"
+import { Plus, Package, DollarSign, Eye, ArrowLeft, Image as ImageIcon, Sparkles, TrendingUp, CalendarDays, ShoppingBag } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AuthGuard } from "@/components/auth-guard"
 import { ArtisanOnboardingGuard } from "@/components/artisan-onboarding-guard"
 import Image from "next/image"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts"
+import ProductStatsDialog from "@/components/product-stats-dialog";
 
 interface Product {
   id: string
@@ -24,6 +26,26 @@ interface Product {
   imageUrl: string
   videoUrl: string
   publishDate: string
+}
+
+interface Stats {
+  totalSales: number;
+  salesThisMonth: number;
+  pastOrders: any[]; // Define more specific types if needed
+  productStats: {
+    id: string;
+    title: string;
+    totalQuantitySold: number;
+    totalRevenue: number;
+  }[];
+}
+
+async function fetchArtisanStats() {
+  const response = await fetch('/api/artisan/stats')
+  if (!response.ok) {
+    throw new Error('Failed to fetch stats')
+  }
+  return response.json()
 }
 
 async function fetchArtisanProducts() {
@@ -49,6 +71,12 @@ export default function DashboardPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [showExitWarning, setShowExitWarning] = useState(false)
 
+  const { data: stats, isLoading: isLoadingStats } = useQuery<Stats>({
+    queryKey: ['artisan-stats'],
+    queryFn: fetchArtisanStats,
+    enabled: !!session,
+  })
+
   const { data, isLoading, error: fetchError } = useQuery({
     queryKey: ['artisan-products'],
     queryFn: fetchArtisanProducts,
@@ -57,15 +85,14 @@ export default function DashboardPage() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: { title: string; price: string; image: File }) => {
-      // Create FormData object
       const formDataToSend = new FormData()
       formDataToSend.append('title', data.title.trim())
       formDataToSend.append('price', data.price.trim())
-      formDataToSend.append('image', data.image) // Note: 'image' not 'file'
+      formDataToSend.append('image', data.image)
 
       const response = await fetch('/api/artisan/products', {
         method: 'POST',
-        body: formDataToSend, // Don't set Content-Type header - let browser set it
+        body: formDataToSend,
       })
       
       if (!response.ok) {
@@ -77,9 +104,10 @@ export default function DashboardPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['artisan-products'] })
+      queryClient.invalidateQueries({ queryKey: ['artisan-stats'] })
       setIsUploading(false)
       setShowExitWarning(false)
-      handleCloseDialog()
+      handleCloseDialog(true)
       toast.success("Product created successfully!")
     },
     onError: (error: Error) => {
@@ -91,17 +119,13 @@ export default function DashboardPage() {
     }
   })
 
-  const handleCloseDialog = () => {
-    if (createProductMutation.isPending || isUploading) {
-      // Don't allow closing during creation
+  const handleCloseDialog = (force: boolean = false) => {
+    if ((createProductMutation.isPending || isUploading) && !force) {
       return
     }
     
     setIsDialogOpen(false)
-    setFormData({
-      title: "",
-      price: "",
-    })
+    setFormData({ title: "", price: "" })
     setError("")
     setSelectedFile(null)
     if (imagePreview) {
@@ -112,65 +136,52 @@ export default function DashboardPage() {
     setShowExitWarning(false)
   }
 
+  const handleDialogOpenChange = (open: boolean) => {
+    if (!open) {
+      if (createProductMutation.isPending || isUploading) {
+        setShowExitWarning(true)
+        setIsDialogOpen(true)
+        return
+      }
+      handleCloseDialog()
+      return
+    }
+    setIsDialogOpen(true)
+  }
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         setError("Please select a valid image file")
         return
       }
-      
-      // Validate file size (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
         setError("Image size must be less than 5MB")
         return
       }
-
       setSelectedFile(file)
       setError("")
-      
-      // Clean up previous preview URL
       if (imagePreview) {
         URL.revokeObjectURL(imagePreview)
       }
-      
-      // Create new preview URL
       const previewUrl = URL.createObjectURL(file)
       setImagePreview(previewUrl)
     }
   }
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
 
-    // Validation
-    if (!formData.title.trim()) {
-      setError("Product name is required")
-      return
-    }
-
-    if (!formData.price.trim()) {
-      setError("Price is required")
-      return
-    }
-
-    if (isNaN(Number(formData.price)) || Number(formData.price) <= 0) {
-      setError("Price must be a valid positive number")
-      return
-    }
-
-    if (!selectedFile) {
-      setError("Please select an image file")
+    if (!formData.title.trim() || !formData.price.trim() || isNaN(Number(formData.price)) || Number(formData.price) <= 0 || !selectedFile) {
+      setError("Please fill all fields correctly.")
       return
     }
 
     setIsUploading(true)
     setShowExitWarning(true)
     
-    // Submit with FormData - AI will generate description and video
     createProductMutation.mutate({
       title: formData.title,
       price: formData.price,
@@ -180,7 +191,6 @@ export default function DashboardPage() {
 
   const products = data?.products || []
 
-  // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
       if (imagePreview) {
@@ -189,334 +199,430 @@ export default function DashboardPage() {
     }
   }, [imagePreview])
 
-  // Add beforeunload warning when creating product
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (showExitWarning) {
         e.preventDefault()
-        e.returnValue = 'Your product is being created. Are you sure you want to leave? Your changes may not be saved.'
-        return 'Your product is being created. Are you sure you want to leave? Your changes may not be saved.'
+        e.returnValue = 'Your product is being created. Are you sure you want to leave?'
+        return e.returnValue
       }
     }
-
     if (showExitWarning) {
       window.addEventListener('beforeunload', handleBeforeUnload)
     }
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
   }, [showExitWarning])
 
-  // Check if user is an artisan
   if (session && session.user.role !== 'ARTISAN') {
     router.push('/')
     return null
   }
 
+  const top10Products = stats?.productStats
+    ?.sort((a, b) => b.totalRevenue - a.totalRevenue)
+    .slice(0, 10);
+    
+  const monthlySalesData = useMemo(() => {
+      if (!stats?.pastOrders) return [];
+
+      const monthLabels: {key: string, name: string}[] = [];
+      const today = new Date();
+      for (let i = 5; i >= 0; i--) {
+          const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+          const monthKey = `${d.getFullYear()}-${d.getMonth()}`;
+          const monthName = d.toLocaleString('default', { month: 'short' });
+          monthLabels.push({key: monthKey, name: monthName});
+      }
+
+      const monthlySales = new Map<string, number>();
+      monthLabels.forEach(m => monthlySales.set(m.key, 0));
+
+      stats.pastOrders.forEach(order => {
+          const orderDate = new Date(order.createdAt);
+          const monthKey = `${orderDate.getFullYear()}-${orderDate.getMonth()}`;
+          if (monthlySales.has(monthKey)) {
+              const currentSales = monthlySales.get(monthKey) || 0;
+              const orderTotal = order.orderItems.reduce((sum: number, item: any) => sum + Number(item.price) * item.quantity, 0);
+              monthlySales.set(monthKey, currentSales + orderTotal);
+          }
+      });
+
+      return monthLabels.map(m => ({
+          name: m.name,
+          total: monthlySales.get(m.key) || 0,
+      }));
+  }, [stats?.pastOrders]);
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-2 border border-gray-300 rounded shadow-lg">
+          <p className="font-bold">{label}</p>
+          <p className="text-sm">Total Sales: ${payload[0].value.toFixed(2)}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+  
+  const truncateText = (text: string, length: number) => {
+    if (text.length <= length) {
+      return text;
+    }
+    return `${text.substring(0, length)}...`;
+  };
+
   return (
     <AuthGuard requireAuth={true}>
       <ArtisanOnboardingGuard>
         <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push('/')}
-                className="text-foreground"
-              >
-                <ArrowLeft size={20} className="mr-2" />
-                <span className="hidden sm:inline">Back to Feed</span>
-                <span className="sm:hidden">Back</span>
-              </Button>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Artisan Dashboard</h1>
-                <p className="text-sm sm:text-base text-muted-foreground">Welcome back, {session?.user.name}</p>
+          <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+            <div className="container mx-auto px-4 py-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => router.push('/')}
+                    className="text-foreground"
+                  >
+                    <ArrowLeft size={20} className="mr-2" />
+                    <span className="hidden sm:inline">Back to Feed</span>
+                    <span className="sm:hidden">Back</span>
+                  </Button>
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">Artisan Dashboard</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">Welcome back, {session?.user.name}</p>
+                  </div>
+                </div>
+                
+                <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+                  <DialogTrigger asChild>
+                    <Button className="bg-black hover:bg-gray-800 w-full sm:w-auto">
+                      <Plus size={16} className="mr-2" />
+                      Add Product
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
+                  <DialogHeader className="space-y-2">
+                   <DialogTitle className="text-lg sm:text-xl">Add New Product</DialogTitle>
+                   <DialogDescription className="text-sm">
+                     Create a new product to showcase in the video feed.
+                   </DialogDescription>
+                 </DialogHeader>
+                 <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+                   {error && (
+                     <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                       {error}
+                     </div>
+                   )}
+
+                   <div className="space-y-2">
+                     <Label htmlFor="title" className="text-sm font-medium">Product Name</Label>
+                     <Input
+                       id="title"
+                       value={formData.title}
+                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                       placeholder="Enter product name"
+                       disabled={createProductMutation.isPending}
+                       className="h-10 sm:h-11"
+                     />
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label className="text-sm font-medium">AI-Generated Content</Label>
+                     <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
+                       <Sparkles size={16} />
+                       <span>AI will automatically generate description and video advertisement</span>
+                     </div>
+                     <p className="text-xs text-muted-foreground">
+                       Upload an image below and AI will analyze it to create a detailed product description and generate a custom 8-second video advertisement.
+                     </p>
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label htmlFor="price" className="text-sm font-medium">Price ($)</Label>
+                     <Input
+                       id="price"
+                       type="number"
+                       step="0.01"
+                       min="0"
+                       value={formData.price}
+                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                       placeholder="0.00"
+                       disabled={createProductMutation.isPending}
+                       className="h-10 sm:h-11"
+                     />
+                   </div>
+
+                   <div className="space-y-2">
+                     <Label htmlFor="imageUpload" className="text-sm font-medium">Product Image</Label>
+                     
+                     <div className="relative">
+                       <Input
+                         id="imageUpload"
+                         type="file"
+                         accept="image/*"
+                         onChange={handleFileSelect}
+                         disabled={createProductMutation.isPending || isUploading}
+                         className="h-10 sm:h-11 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                       />
+                     </div>
+
+                     {imagePreview && (
+                       <div className="mt-3">
+                         <div className="relative w-full h-32 sm:h-40 bg-gray-100 rounded-lg overflow-hidden">
+                           <Image
+                             src={imagePreview}
+                             alt="Preview"
+                             fill
+                             className="object-cover"
+                           />
+                           <button
+                             type="button"
+                             onClick={() => {
+                               setSelectedFile(null)
+                               if (imagePreview) {
+                                 URL.revokeObjectURL(imagePreview)
+                               }
+                               setImagePreview(null)
+                             }}
+                             className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                           >
+                             ×
+                           </button>
+                         </div>
+                         <p className="text-xs text-muted-foreground mt-1">
+                           Selected: {selectedFile?.name}
+                         </p>
+                       </div>
+                     )}
+
+                     <p className="text-xs text-muted-foreground">
+                       Upload an image file (max 5MB)
+                     </p>
+                   </div>
+
+                   {(createProductMutation.isPending || isUploading) && (
+                     <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
+                       <div className="flex items-center gap-3">
+                         <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
+                         <div>
+                           <p className="text-black font-medium">Creating your product...</p>
+                           <p className="text-gray-600 text-sm mt-1">
+                             This process takes approximately 1 minute. Please don't close this window.
+                           </p>
+                         </div>
+                       </div>
+                     </div>
+                   )}
+
+                   {showExitWarning && (
+                     <div className="bg-gray-100 border border-gray-400 rounded-lg p-4 mb-4">
+                       <div className="flex items-center gap-3">
+                         <div className="text-black">⚠️</div>
+                         <div>
+                           <p className="text-black font-medium">Please don't close this window!</p>
+                           <p className="text-gray-600 text-sm mt-1">
+                             Your product is being created. Closing the window may cause your changes to be lost.
+                           </p>
+                         </div>
+                       </div>
+                     </div>
+                   )}
+
+                   <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                     <Button
+                       type="button"
+                       variant="outline"
+                       onClick={() => handleCloseDialog()}
+                       className="flex-1 h-10 sm:h-11 order-2 sm:order-1"
+                       disabled={createProductMutation.isPending || isUploading}
+                     >
+                       Cancel
+                     </Button>
+                     <Button
+                       type="submit"
+                       className="flex-1 bg-black hover:bg-gray-800 h-10 sm:h-11 order-1 sm:order-2"
+                       disabled={createProductMutation.isPending || isUploading || !selectedFile}
+                     >
+                       {isUploading ? "Uploading..." : createProductMutation.isPending ? "Creating..." : "Create Product"}
+                     </Button>
+                   </div>
+                 </form>
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
-            
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-black hover:bg-gray-800 w-full sm:w-auto">
-                  <Plus size={16} className="mr-2" />
-                  Add Product
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
-                <DialogHeader className="space-y-2">
-                  <DialogTitle className="text-lg sm:text-xl">Add New Product</DialogTitle>
-                  <DialogDescription className="text-sm">
-                    Create a new product to showcase in the video feed.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-                  {error && (
-                    <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
-                      {error}
-                    </div>
-                  )}
+          </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="title" className="text-sm font-medium">Product Name</Label>
-                    <Input
-                      id="title"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter product name"
-                      disabled={createProductMutation.isPending}
-                      className="h-10 sm:h-11"
-                    />
-                  </div>
+          <div className="container mx-auto px-4 py-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${(stats?.totalSales ?? 0).toFixed(2)}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Sales This Month</CardTitle>
+                  <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">${(stats?.salesThisMonth ?? 0).toFixed(2)}</div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{products.length}</div>
+                </CardContent>
+              </Card>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">AI-Generated Content</Label>
-                    <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
-                      <Sparkles size={16} />
-                      <span>AI will automatically generate description and video advertisement</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Upload an image below and AI will analyze it to create a detailed product description and generate a custom 8-second video advertisement.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="price" className="text-sm font-medium">Price ($)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      placeholder="0.00"
-                      disabled={createProductMutation.isPending}
-                      className="h-10 sm:h-11"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="imageUpload" className="text-sm font-medium">Product Image</Label>
-                    
-                    {/* File Upload Input */}
-                    <div className="relative">
-                      <Input
-                        id="imageUpload"
-                        type="file"
-                        accept="image/*"
-                        onChange={handleFileSelect}
-                        disabled={createProductMutation.isPending || isUploading}
-                        className="h-10 sm:h-11 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Sales</CardTitle>
+                  <CardDescription>Your sales performance over the past few months.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={monthlySalesData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="total" fill="#000000" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Products by Revenue</CardTitle>
+                  <CardDescription>Your product sales performance.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart
+                      data={top10Products}
+                      margin={{
+                        top: 5,
+                        right: 30,
+                        left: 20,
+                        bottom: 5,
+                      }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis 
+                        dataKey="title" 
+                        angle={-45} 
+                        textAnchor="end" 
+                        height={80}
+                        tickFormatter={(tick) => truncateText(tick, 15)}
+                        interval={0}
                       />
-                    </div>
+                      <YAxis />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend />
+                      <Line type="monotone" dataKey="totalRevenue" stroke="#000000" activeDot={{ r: 8 }} name="Revenue" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </div>
 
-                    {/* Image Preview */}
-                    {imagePreview && (
-                      <div className="mt-3">
-                        <div className="relative w-full h-32 sm:h-40 bg-gray-100 rounded-lg overflow-hidden">
+            <div>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">Your Products</h2>
+              
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="text-muted-foreground">Loading products...</div>
+                </div>
+              ) : fetchError ? (
+                <div className="text-center py-8">
+                  <div className="text-red-500">Error loading products. Please try again.</div>
+                </div>
+              ) : products.length === 0 ? (
+                <div className="text-center py-8 sm:py-12 px-4">
+                  <Package size={40} className="mx-auto text-muted-foreground mb-4" />
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No products yet</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4">Create your first product to start showcasing your work!</p>
+                  <Button 
+                    onClick={() => setIsDialogOpen(true)}
+                    className="bg-black hover:bg-gray-800 w-full sm:w-auto"
+                  >
+                    <Plus size={16} className="mr-2" />
+                    Add Your First Product
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                  {products.map((product: Product, index: number) => (
+                    <motion.div
+                      key={product.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <Card className="overflow-hidden">
+                        <div className="relative aspect-square">
                           <Image
-                            src={imagePreview}
-                            alt="Preview"
+                            src={product.imageUrl}
+                            alt={product.title}
                             fill
                             className="object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedFile(null)
-                              if (imagePreview) {
-                                URL.revokeObjectURL(imagePreview)
-                              }
-                              setImagePreview(null)
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement
+                              target.style.display = 'none'
                             }}
-                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                          >
-                            ×
-                          </button>
+                          />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Selected: {selectedFile?.name}
-                        </p>
-                      </div>
-                    )}
-
-                    <p className="text-xs text-muted-foreground">
-                      Upload an image file (max 5MB)
-                    </p>
-                  </div>
-
-                  {/* Loading Message */}
-                  {(createProductMutation.isPending || isUploading) && (
-                    <div className="bg-gray-50 border border-gray-300 rounded-lg p-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
-                        <div>
-                          <p className="text-black font-medium">Creating your product...</p>
-                          <p className="text-gray-600 text-sm mt-1">
-                            This process takes approximately 1 minute. Please don't close this window.
+                        <CardContent className="p-3 sm:p-4">
+                          <h3 className="font-semibold text-foreground mb-1 truncate text-sm sm:text-base">{product.title}</h3>
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-base sm:text-lg font-bold text-black">${product.price}</span>
+                            <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => router.push(`/product/${product.id}`)}
+                                  className="text-xs sm:text-sm px-2 sm:px-3"
+                                >
+                                  <Eye size={12} className="mr-1" />
+                                  <span className="hidden sm:inline">View</span>
+                                </Button>
+                                {stats?.productStats && (
+                                  <ProductStatsDialog productStats={stats.productStats.find(p => p.id === product.id)!} />
+                                )}
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Added {new Date(product.publishDate).toLocaleDateString()}
                           </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Exit Warning */}
-                  {showExitWarning && (
-                    <div className="bg-gray-100 border border-gray-400 rounded-lg p-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="text-black">⚠️</div>
-                        <div>
-                          <p className="text-black font-medium">Please don't close this window!</p>
-                          <p className="text-gray-600 text-sm mt-1">
-                            Your product is being created. Closing the window may cause your changes to be lost.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCloseDialog}
-                      className="flex-1 h-10 sm:h-11 order-2 sm:order-1"
-                      disabled={createProductMutation.isPending || isUploading}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="flex-1 bg-black hover:bg-gray-800 h-10 sm:h-11 order-1 sm:order-2"
-                      disabled={createProductMutation.isPending || isUploading || !selectedFile}
-                    >
-                      {isUploading ? "Uploading..." : createProductMutation.isPending ? "Creating..." : "Create Product"}
-                    </Button>
-                  </div>
-                </form>
-              </DialogContent>
-            </Dialog>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Stats */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{products.length}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average Price</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${products.length > 0 
-                  ? (products.reduce((sum: number, p: Product) => sum + Number(p.price), 0) / products.length).toFixed(2)
-                  : '0.00'
-                }
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${products.reduce((sum: number, p: Product) => sum + Number(p.price), 0).toFixed(2)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Products List */}
-        <div>
-          <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">Your Products</h2>
-          
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="text-muted-foreground">Loading products...</div>
-            </div>
-          ) : fetchError ? (
-            <div className="text-center py-8">
-              <div className="text-red-500">Error loading products. Please try again.</div>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 px-4">
-              <Package size={40} className="mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No products yet</h3>
-              <p className="text-sm sm:text-base text-muted-foreground mb-4">Create your first product to start showcasing your work!</p>
-              <Button 
-                onClick={() => setIsDialogOpen(true)}
-                className="bg-black hover:bg-gray-800 w-full sm:w-auto"
-              >
-                <Plus size={16} className="mr-2" />
-                Add Your First Product
-              </Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {products.map((product: Product, index: number) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <Card className="overflow-hidden">
-                    <div className="relative aspect-square">
-                      <Image
-                        src={product.imageUrl}
-                        alt={product.title}
-                        fill
-                        className="object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement
-                          target.style.display = 'none'
-                        }}
-                      />
-                    </div>
-                    <CardContent className="p-3 sm:p-4">
-                      <h3 className="font-semibold text-foreground mb-1 truncate text-sm sm:text-base">{product.title}</h3>
-                      <p className="text-xs sm:text-sm text-muted-foreground mb-2 line-clamp-2">{product.description}</p>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-base sm:text-lg font-bold text-black">${product.price}</span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => router.push(`/product/${product.id}`)}
-                          className="text-xs sm:text-sm px-2 sm:px-3"
-                        >
-                          <Eye size={12} className="mr-1" />
-                          <span className="hidden sm:inline">View</span>
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Added {new Date(product.publishDate).toLocaleDateString()}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
         </div>
       </ArtisanOnboardingGuard>
     </AuthGuard>

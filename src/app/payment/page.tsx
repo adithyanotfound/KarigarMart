@@ -22,16 +22,28 @@ function PaymentContent() {
   const handlePayment = async () => {
     setIsProcessing(true)
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    setIsProcessing(false)
-    setIsSuccess(true)
-    
-    // After 2 seconds, redirect to home
-    setTimeout(() => {
-      router.push('/')
-    }, 2000)
+    try {
+      const response = await fetch('/api/order', {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create order');
+      }
+      
+      setIsProcessing(false)
+      setIsSuccess(true)
+      
+      // After 2 seconds, redirect to orders page
+      setTimeout(() => {
+        router.push('/orders')
+      }, 2000)
+
+    } catch (error) {
+      console.error(error);
+      setIsProcessing(false);
+      // You might want to show an error message to the user here
+    }
   }
 
   if (isSuccess) {
@@ -46,7 +58,7 @@ function PaymentContent() {
             <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
             <p className="text-muted-foreground mb-4">Thank you for your purchase.</p>
-            <p className="text-sm text-muted-foreground">Redirecting to home...</p>
+            <p className="text-sm text-muted-foreground">Redirecting to your orders...</p>
           </motion.div>
         </div>
       </AuthGuard>

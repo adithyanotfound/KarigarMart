@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { useVideoSettings } from "@/hooks/use-video-settings"
+import { Slider } from "@/components/ui/slider"
 
 interface Product {
   id: string
@@ -31,6 +32,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseChange }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isMuted, setIsMuted, hasUserInteracted, setHasUserInteracted } = useVideoSettings()
+  const [volume, setVolume] = useState(1)
   const [isPaused, setIsPaused] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [showPlayPauseButton, setShowPlayPauseButton] = useState(true)
@@ -38,11 +40,10 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
 
   useEffect(() => {
     if (videoRef.current) {
-      // Apply mute setting
       videoRef.current.muted = isMuted
+      videoRef.current.volume = volume
 
       if (isActive && !isPaused && hasUserInteracted) {
-        // Only try to play if user has interacted with the page
         videoRef.current.play().catch((error) => {
           console.warn('Video play failed:', error)
           // If play fails, show the play button
@@ -55,7 +56,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
         videoRef.current.pause()
       }
     }
-  }, [isActive, isPaused, isMuted, hasUserInteracted])
+  }, [isActive, isPaused, isMuted, hasUserInteracted, volume])
 
   // Reset pause state and show play/pause button when video becomes active
   useEffect(() => {
@@ -93,6 +94,15 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
     e.stopPropagation() // Prevent triggering play/pause
     setIsMuted(!isMuted)
   }
+
+  const handleVolumeChange = (newVolume: number[]) => {
+    setVolume(newVolume[0]);
+    if (newVolume[0] === 0) {
+      setIsMuted(true);
+    } else {
+      setIsMuted(false);
+    }
+  };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent triggering play/pause
@@ -147,18 +157,26 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
         </motion.div>
       )}
 
-      {/* Mute/unmute button - top right corner below navbar */}
-      <motion.button
-        whileTap={{ scale: 0.9 }}
-        onClick={handleMuteToggle}
-        className="absolute top-20 right-4 z-30 p-2 rounded-full bg-black/50 backdrop-blur-sm"
-      >
-        {isMuted ? (
-          <VolumeX size={24} className="text-white" />
-        ) : (
-          <Volume2 size={24} className="text-white" />
-        )}
-      </motion.button>
+      <div className="absolute top-20 right-4 z-30 flex items-center gap-2">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleMuteToggle}
+          className="p-2 rounded-full bg-black/50 backdrop-blur-sm"
+        >
+          {isMuted ? (
+            <VolumeX size={24} className="text-white" />
+          ) : (
+            <Volume2 size={24} className="text-white" />
+          )}
+        </motion.button>
+        <Slider
+            value={[volume]}
+            onValueChange={handleVolumeChange}
+            max={1}
+            step={0.1}
+            className="w-24"
+        />
+      </div>
 
       {/* Product info overlay - hidden when paused */}
       {!isPaused && (

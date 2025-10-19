@@ -1,6 +1,6 @@
 "use client"
 
-import { ShoppingCart, User, LogOut, Search, X } from "lucide-react"
+import { ShoppingCart, User, LogOut, Search, X, Package, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useSession, signOut } from "next-auth/react"
@@ -321,11 +321,19 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                     <User className="mr-2 h-4 w-4" />
                     Profile
                   </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => router.push('/orders')} 
+                    className="text-white hover:bg-[#404040]"
+                  >
+                    <Package className="mr-2 h-4 w-4" />
+                    Past Orders
+                  </DropdownMenuItem>
                   {session.user.role === 'ARTISAN' && (
                     <DropdownMenuItem 
                       onClick={() => router.push('/dashboard')} 
                       className="text-white hover:bg-[#404040]"
                     >
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
                       Dashboard
                     </DropdownMenuItem>
                   )}

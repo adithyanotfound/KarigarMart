@@ -57,6 +57,8 @@ export async function POST(request: NextRequest) {
    - Avoid text completely
    - Make it engaging and highlight the product's unique selling points
 
+CRITICAL: THE NARRATION MUST BE 8 SECONDS LONG. IF CUT SHORT IT WILL BE REJECTED. END THE NARRATION GRACEFULLY.
+
 Format your response exactly like this:
 
 <VIDEO_DESCRIPTION_STARTS>

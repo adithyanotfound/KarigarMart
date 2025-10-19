@@ -48,42 +48,61 @@ export async function POST(request: NextRequest) {
 
 1. PRODUCT DESCRIPTION: Create a concise (max 100 words) yet detailed, engaging product description suitable for an e-commerce listing. Include details about the product's appearance, materials, style, and any notable features. Make it compelling for potential customers.
 
-2. VIDEO NARRATION: Create a detailed 8-second advertisement narration that includes:
-   - A highly detailed description of the product's physical appearance, materials, colors, textures, and visual features
-   - Either a voiceover or conversation between 2+ people (specify gender and roles)
-   - Detailed timing instructions (what happens when, in seconds)
-   - Visual descriptions of how the video should look
-   - Specific dialogue/script with exact words to be spoken
-   - Avoid text completely
-   - Make it engaging and highlight the product's unique selling points
+---
+2. VIDEO NARRATION: Create a detailed, **8-second advertisement narration using a two-shot structure (two distinct scenes/visual shifts)**. The narration must include:
+   - **Highly precise timing instructions** (e.g., Shot 1: 0-4s, Shot 2: 4-8s) for both visuals and dialogue/voiceover to ensure seamless 8-second flow.
+   - A detailed, scene-by-scene **visual description** of the product's physical appearance, materials, colors, textures, and features, which the Veo prompt will translate into a realistic video.
+   - Either a voiceover or conversation between 2+ people (specify gender and roles).
+   - Visual descriptions of how the video should look (camera movement, setting, lighting, mood).
+   - Specific dialogue/script with exact words to be spoken. The script must focus on the product's **Unique Selling Points (USPs)** and **emotional benefit**.
+   - **Avoid text completely** (no on-screen text, no subtitles).
+   - Make it engaging and highlight the product's unique selling points.
 
-CRITICAL: THE NARRATION MUST BE 8 SECONDS LONG. IF CUT SHORT IT WILL BE REJECTED. END THE NARRATION GRACEFULLY.
+CRITICAL: THE NARRATION MUST BE **EXACTLY** 8 SECONDS LONG AND MUST USE A **CLEAR TWO-SHOT STRUCTURE** with a distinct visual cut/transition around the halfway mark. The voice/dialogue must **CONCLUDE BY 7.0-7.5 SECONDS** to allow for a graceful visual hold/fade with only background audio in the final second.
 
-Format your response exactly like this:
+Format your response exactly like the examples below:
+
+Example 1: Product - "Zara Jute Tote Bag"
 
 <VIDEO_DESCRIPTION_STARTS>
-[Your product description here]
+The ultimate eco-chic accessory for your everyday. This structured tote bag is crafted from naturally durable, finely woven jute with sleek contrast stitching. Its minimalist rectangular silhouette provides ample space for essentials, while the soft, tan leather-look handles ensure comfort on the shoulder. Perfect for market runs or city strolls, it blends sustainable material with high street style. A must-have accessory for the modern, conscious consumer.
 <VIDEO_DESCRIPTION_ENDS>
 
 <VIDEO_NARRATION_STARTS>
-[Your detailed video narration here]
+**SHOT 1 (0-4s):**
+**Visuals:** A stylish woman (late 20s, professional attire) is quickly walking through a sunlit, contemporary glass lobby. The camera follows her shoulder, showing the **jute tote bag** prominently. The bag's **natural, coarse texture** contrasts beautifully with her crisp white blazer.
+**Audio (Voiceover - Female, Confident Tone):** "Need a carry-all that works as hard as you do?"
+**Dialogue Timing:** Voiceover line concludes at 3.5 seconds.
+**Transition:** Quick cinematic cut to Shot 2 at 4 seconds.
+
+**SHOT 2 (4-8s):**
+**Visuals:** Close-up slow-motion shot of the **jute tote bag** being set down on a bright white marble desk. A hand places a black tablet and a pair of sleek sunglasses inside. Focus on the **smooth leather-look handles** and the bag's sturdy, upright structure.
+**Audio (Voiceover - Female, Confident Tone):** "The Jute Tote—sustainable style that doesn't compromise on structure."
+**Dialogue Timing:** Voiceover line concludes at 7.0 seconds.
+**Final Visual:** The bag holds still on the desk, with golden ambient light catching the fibers. Background music (Upbeat, minimal lo-fi pop) fades out gracefully by 8.0 seconds.
 <VIDEO_NARRATION_ENDS>
 
-Example narrations:
+Example 2: Product - "Aurora Smart LED Desk Lamp"
 
-IMP: THESE NARRATIONS DO NOT INCLUDE PRODUCT DESCRIPTION. YOU ARE REQUIRED TO ONLY GENERATE THE DETAILED DESCRIPITON OF THE PRODUCT + NARRATION AS WELL AS THE PRODUCT DESCRIPTION.
-
-Product 1: Zara jute tote bag
+<VIDEO_DESCRIPTION_STARTS>
+Illuminate your workspace with the Aurora Smart LED Desk Lamp, where modern design meets intelligent functionality. Featuring a slim, brushed aluminum arm and a circular, adjustable LED head, this lamp delivers fully customizable lighting. Choose from three color temperatures and five brightness levels via the intuitive touch controls. Its minimalist form factor saves desk space while providing flicker-free, energy-efficient light perfect for reading, studying, or late-night projects. Available in matte black.
+<VIDEO_DESCRIPTION_ENDS>
 
 <VIDEO_NARRATION_STARTS>
-A stylish Instagram advertisement video for Zara, showcasing a jute tote bag. The setting is an urban street café at golden hour, with warm sunlight and a modern, minimalistic aesthetic. The mood is chic, eco-friendly, and aspirational. Cinematic camera style with smooth motion, no text, no narration. Shot 1 (0–2s): A young fashionable woman in her mid-20s, wearing neutral-toned chic clothing (white sleeveless top, beige linen trousers), walks confidently down a sunlit street with the jute tote bag on her shoulder. The background is softly blurred city life with pastel buildings. Shot 2 (2–5s): Close-up slow-motion of the jute tote bag swaying naturally as she walks. Focus on the rich, textured jute fibers catching golden sunlight, giving the bag a luxurious eco-friendly vibe. Shot 3 (5–7s): The woman sets the bag down on a wooden café table beside an iced coffee. Camera smoothly tracks the bag, making it the centerpiece of the frame. Shot 4 (7–8s, Final Hero Shot): Cinematic close-up of the tote bag on the table, glowing in warm sunlight, with the blurred silhouette of the woman sipping coffee in the background. Audio: Upbeat, minimal lo-fi house track with a trendy Instagram reel vibe. Subtle ambient café sounds (soft chatter, clinking cups, breeze) under the music. No voices, no text.
+**SHOT 1 (0-3s):**
+**Visuals:** A tight close-up dolly shot tracking along the **matte black, brushed aluminum** arm of the **Aurora Lamp** as it elegantly curves over a wooden desk. A hand (male, focused) lightly taps the **circular touch panel** on the base. The light instantly changes from a **soft warm glow (2700K)** to **crisp daylight white (6500K)**.
+**Audio (Voiceover - Male, Calm/Soothing Tone):** "From late-night focus..."
+**Dialogue Timing:** Voiceover line concludes at 2.5 seconds.
+**Transition:** Fast, clean cut to Shot 2 at 3 seconds.
+
+**SHOT 2 (3-8s):**
+**Visuals:** Wide, static shot of a clean workspace at twilight. The lamp is the central focus, casting a bright, **flicker-free white light** over a book and notebook. A female user (early 30s) smiles slightly, focused on her work. The camera slowly zooms in on the bright pool of light.
+**Audio (Voiceover - Male, Calm/Soothing Tone):** "...to the perfect light for every project. Aurora: Your intelligent light, effortless control."
+**Dialogue Timing:** Voiceover line concludes at 7.5 seconds.
+**Final Visual:** The lamp is held in a close-up, radiating light. Subtle ambient music (gentle piano loop) holds for the final half-second before a sharp cut to black at 8.0 seconds.
 <VIDEO_NARRATION_ENDS>
 
-Product 2: Zara jute tote bag
-
-<VIDEO_NARRATION_STARTS>
-A bright, trendy outdoor café scene during golden hour with soft sunlight reflecting off glass windows. The camera pans smoothly across a wooden table where a stylish young woman (mid-20s, South Asian, with long wavy hair, chic casual outfit – white linen shirt and light blue jeans) places a minimal, eco-friendly jute tote bag on the table. The tote bag looks premium, textured with natural fibers, and stands out against the warm background. She adjusts her sunglasses and smiles confidently as she grabs the tote by its handles. The video cuts to a slow-motion shot of her walking past green plants with the tote swinging naturally at her side. In the background, blurred city life adds movement without distracting from the bag. Background music: upbeat, modern lo-fi pop with light percussion and warm synths, catchy enough to feel trendy but not overwhelming. Voiceover pitch (female, confident yet friendly tone): 'Eco is the new chic. Carry style that cares. Discover evrgrn's jute tote – your everyday essential, reimagined.' Ambient sound design: subtle café chatter and clinking cups at the beginning, fading into upbeat background music as the focus shifts to the walking scene. Ending (last 2 seconds): camera zooms slightly closer to the tote bag as sunlight highlights its natural fibers. Music hits a crisp beat drop right at the end for emphasis.
-<VIDEO_NARRATION_ENDS>
+Now, please analyze the image for **"${productName}"** and provide the complete two-section response formatted exactly as shown above.
 ` 
       }
     ])

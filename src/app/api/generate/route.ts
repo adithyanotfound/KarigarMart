@@ -95,7 +95,7 @@ export async function POST(request: Request) {
                 aspectRatio: "9:16",
                 durationSeconds: 8,
                 generateAudio: true,
-                personGeneration: "allow_adult",
+                personGeneration: "allow_all",
                 resolution: "720p",
                 enhancePrompt: true,
                 sampleCount: 1,

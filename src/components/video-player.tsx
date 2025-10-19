@@ -31,8 +31,7 @@ interface VideoPlayerProps {
 
 export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseChange }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  const { isMuted, setIsMuted, hasUserInteracted, setHasUserInteracted } = useVideoSettings()
-  const [volume, setVolume] = useState(1)
+  const { isMuted, setIsMuted, volume, setVolume, hasUserInteracted, setHasUserInteracted } = useVideoSettings()
   const [isPaused, setIsPaused] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [showPlayPauseButton, setShowPlayPauseButton] = useState(true)
@@ -91,21 +90,21 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
   }
 
   const handleMuteToggle = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent triggering play/pause
+    e.stopPropagation()
     setIsMuted(!isMuted)
+    if (!isMuted) {
+      setVolume(0);
+    } else {
+      setVolume(1);
+    }
   }
 
   const handleVolumeChange = (newVolume: number[]) => {
     setVolume(newVolume[0]);
-    if (newVolume[0] === 0) {
-      setIsMuted(true);
-    } else {
-      setIsMuted(false);
-    }
   };
 
   const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent triggering play/pause
+    e.stopPropagation()
     setIsLiked(!isLiked)
     onLike(product.id)
   }
@@ -163,7 +162,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
           onClick={handleMuteToggle}
           className="p-2 rounded-full bg-black/50 backdrop-blur-sm"
         >
-          {isMuted ? (
+          {isMuted || volume === 0 ? (
             <VolumeX size={24} className="text-white" />
           ) : (
             <Volume2 size={24} className="text-white" />

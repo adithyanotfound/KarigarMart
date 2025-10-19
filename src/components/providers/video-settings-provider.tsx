@@ -5,6 +5,8 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 interface VideoSettingsContextType {
   isMuted: boolean
   setIsMuted: (muted: boolean) => void
+  volume: number
+  setVolume: (volume: number) => void
   hasUserInteracted: boolean
   setHasUserInteracted: (interacted: boolean) => void
 }
@@ -17,14 +19,24 @@ interface VideoSettingsProviderProps {
 
 export function VideoSettingsProvider({ children }: VideoSettingsProviderProps) {
   const [isMuted, setIsMutedState] = useState(true)
+  const [volume, setVolumeState] = useState(1)
   const [hasUserInteracted, setHasUserInteractedState] = useState(false)
 
-  // Load mute setting from localStorage on mount
+  // Load settings from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const savedMuteSetting = localStorage.getItem('videoMuted')
       if (savedMuteSetting !== null) {
         setIsMutedState(JSON.parse(savedMuteSetting))
+      }
+
+      const savedVolumeSetting = localStorage.getItem('videoVolume')
+      if (savedVolumeSetting !== null) {
+        const parsedVolume = JSON.parse(savedVolumeSetting)
+        setVolumeState(parsedVolume)
+        if(parsedVolume === 0) {
+            setIsMutedState(true)
+        }
       }
     }
   }, [])
@@ -58,6 +70,18 @@ export function VideoSettingsProvider({ children }: VideoSettingsProviderProps) 
       localStorage.setItem('videoMuted', JSON.stringify(muted))
     }
   }
+  
+  const setVolume = (newVolume: number) => {
+    setVolumeState(newVolume)
+    if (newVolume > 0) {
+      setIsMuted(false)
+    } else {
+      setIsMuted(true)
+    }
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('videoVolume', JSON.stringify(newVolume));
+    }
+  };
 
   const setHasUserInteracted = (interacted: boolean) => {
     setHasUserInteractedState(interacted)
@@ -67,6 +91,8 @@ export function VideoSettingsProvider({ children }: VideoSettingsProviderProps) 
     <VideoSettingsContext.Provider value={{ 
       isMuted, 
       setIsMuted, 
+      volume,
+      setVolume,
       hasUserInteracted, 
       setHasUserInteracted 
     }}>

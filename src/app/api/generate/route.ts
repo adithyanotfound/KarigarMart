@@ -1,7 +1,5 @@
 import fs from "fs";
 import path from "path";
-import FormData from "form-data";
-import axios from "axios";
 import { NextResponse } from "next/server";
 import { GoogleAuth } from "google-auth-library";
 import crypto from "crypto";
@@ -10,6 +8,9 @@ const PROJECT_ID = process.env.PROJECT_ID;
 const LOCATION_ID = process.env.LOCATION_ID;
 const MODEL_ID = process.env.MODEL_ID;
 const API_ENDPOINT = process.env.API_ENDPOINT;
+
+const GCS_BUCKET_NAME = process.env.GCS_BUCKET_NAME;
+const GCS_OUTPUT_URI = `gs://${GCS_BUCKET_NAME}/video-outputs/${Date.now()}/`; 
 
 const ENC_PATH = path.join(process.cwd(), "service-account.json.enc");
 const password = process.env.ENCRYPT_PASSWORD!;
@@ -36,14 +37,14 @@ const auth = new GoogleAuth({
 });
 
 async function getAccessToken() {
-    const client = await auth.getClient(); // automatically reads the JSON file
+    const client = await auth.getClient();
     const tokenResponse = await client.getAccessToken();
     if (!tokenResponse?.token) throw new Error("Failed to get access token");
     return tokenResponse.token;
 }
 
-// Helper: poll until video is ready
-async function pollForResult(operationName: any, token: any) {
+
+async function pollForResult(operationName: any, token: any): Promise<string> {
     while (true) {
         const response = await fetch(
             `https://${API_ENDPOINT}/v1/projects/${PROJECT_ID}/locations/${LOCATION_ID}/publishers/google/models/${MODEL_ID}:fetchPredictOperation`,
@@ -57,15 +58,26 @@ async function pollForResult(operationName: any, token: any) {
             }
         );
         const data = await response.json();
-        if (data.done && data.response?.videos?.length > 0) {
-            return data.response.videos[0].bytesBase64Encoded;
+
+        if (data.done) {
+            const gcsUri = data.response?.videos?.[0]?.gcsUri;
+            if (gcsUri) {
+                return gcsUri;
+            } 
+            if (data.error) {
+                throw new Error(`Video generation failed: ${data.error.message}`);
+            }
+            throw new Error("Operation completed, but no video URI found in response.");
         }
+        
         console.log("Video not ready yet... retrying in 10s");
         await new Promise((r) => setTimeout(r, 10000));
     }
 }
 
 export async function POST(request: Request) {
+    let videoUrl = null; 
+    
     try {
         const { prompt } = await request.json();
 
@@ -77,8 +89,6 @@ export async function POST(request: Request) {
         }
 
         const token = await getAccessToken();
-
-        // Step 1: Start video generation
         const requestBody = {
             instances: [{ prompt }],
             parameters: {
@@ -90,6 +100,7 @@ export async function POST(request: Request) {
                 enhancePrompt: true,
                 sampleCount: 1,
                 addWatermark: true,
+                storageUri: GCS_OUTPUT_URI, 
             },
         };
 
@@ -108,38 +119,23 @@ export async function POST(request: Request) {
         const data = await response.json();
         const operationName = data.name;
         console.log("Started operation:", operationName);
-
-        // Step 2: Poll until video is ready
-        const videoBase64 = await pollForResult(operationName, token);
-
-        // Step 3: Upload video directly from memory (no filesystem writes)
+        const gcsUri = await pollForResult(operationName, token); 
+        videoUrl = gcsUri.replace("gs://", "https://storage.googleapis.com/");
         const timestamp = Date.now();
-        const fileName = `output-${timestamp}.mp4`;
-        
-        // Create FormData with video buffer directly
-        const form = new FormData();
-        const videoBuffer = Buffer.from(videoBase64, "base64");
-        form.append("file", videoBuffer, {
-            filename: fileName,
-            contentType: "video/mp4"
-        });
-
-        const uploadResponse = await axios.post(
-            `${process.env.UPLOAD_SERVER_URL}/upload`,
-            form,
-            {
-                headers: form.getHeaders(),
+        const uploadResponse = {
+            data: {
+                url: videoUrl,
+                gcsUri: gcsUri,
+                message: "Stored directly to GCS"
             }
-        );
+        };
 
-        // Step 4: Respond with uploaded video URL
-        const videoUrl = (uploadResponse as any)?.data?.data?.url || null;
         console.log('Upload response:', uploadResponse); // Debug log
-        console.log('Extracted video URL:', videoUrl); // Debug log
+        console.log('Extracted video URL (GCS Public):', videoUrl); // Debug log
         
         return NextResponse.json({
-            message: "Video generated and uploaded successfully",
-            uploadResponse: (uploadResponse as any)?.data,
+            message: "Video generated and stored in GCS successfully",
+            uploadResponse: uploadResponse, 
             url: videoUrl,
         });
 

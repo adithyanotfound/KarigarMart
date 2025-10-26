@@ -40,14 +40,11 @@ async function fetchProduct(id: string): Promise<Product> {
 // Enhanced Video Player Component
 function EnhancedVideoPlayer({ videoUrl, title }: { videoUrl: string; title: string }) {
   return (
-    <div className="aspect-video bg-black rounded-lg overflow-hidden select-none video-container">
+    <div className="bg-black rounded-lg overflow-hidden select-none video-container" style={{ height: '100%', minHeight: '400px' }}>
       <video 
         src={videoUrl} 
         controls 
-        controlsList="nodownload"
-        className="w-full h-full pointer-events-auto"
-        autoPlay
-        playsInline
+        className="w-full h-full"
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
       />

@@ -190,7 +190,8 @@
     "addFirstProduct": "ನಿಮ್ಮ ಮೊದಲ ಉತ್ಪನ್ನವನ್ನು ಸೇರಿಸಿ",
     "view": "ವೀಕ್ಷಿಸು",
     "added": "ಸೇರಿಸಲಾಗಿದೆ",
-    "totalSalesTooltip": "ಒಟ್ಟು ಮಾರಾಟ"
+    "totalSalesTooltip": "ಒಟ್ಟು ಮಾರಾಟ",
+    "downloadStarted": "ಡೌನ್ಲೋಡ್ ಆರಂಭವಾಗಿದೆ..."
   },
   "onboarding": {
     "welcome": "ಸ್ವಾಗತ",

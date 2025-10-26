@@ -190,7 +190,8 @@
     "addFirstProduct": "നിങ്ങളുടെ ആദ്യ ഉൽപ്പന്നം ചേർക്കുക",
     "view": "കാണുക",
     "added": "ചേർത്തു",
-    "totalSalesTooltip": "മൊത്തം വിൽപ്പന"
+    "totalSalesTooltip": "മൊത്തം വിൽപ്പന",
+    "downloadStarted": "ഡൌന്ലോഡ് ആരംഭിക്കുന്നു..."
   },
   "onboarding": {
     "welcome": "സ്വാഗതം",

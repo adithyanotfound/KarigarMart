@@ -4,11 +4,12 @@ import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { useSession } from "next-auth/react"
-import { ArrowLeft, ShoppingCart, Heart, Plus, Minus } from "lucide-react"
+import { ArrowLeft, ShoppingCart, Heart, Plus, Minus, Play } from "lucide-react"
 import { useCart } from "@/hooks/use-cart"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AuthGuard } from "@/components/auth-guard"
 import Image from "next/image"
 
@@ -34,6 +35,24 @@ async function fetchProduct(id: string): Promise<Product> {
     throw new Error('Failed to fetch product')
   }
   return response.json()
+}
+
+// Enhanced Video Player Component
+function EnhancedVideoPlayer({ videoUrl, title }: { videoUrl: string; title: string }) {
+  return (
+    <div className="aspect-video bg-black rounded-lg overflow-hidden select-none video-container">
+      <video 
+        src={videoUrl} 
+        controls 
+        controlsList="nodownload"
+        className="w-full h-full pointer-events-auto"
+        autoPlay
+        playsInline
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+      />
+    </div>
+  )
 }
 
 export default function ProductPage() {
@@ -151,6 +170,26 @@ export default function ProductPage() {
                 </div>
 
                 {/* Artisan Info */}
+                {/* View Reel Button */}
+                <Card>
+                  <CardContent className="p-4">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="w-full bg-black hover:bg-gray-800 text-white">
+                          <Play className="mr-2 h-4 w-4" />
+                          View Product Reel
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[95vh] flex flex-col">
+                        <DialogHeader className="flex-shrink-0">
+                          <DialogTitle>{product.title} - Product Reel</DialogTitle>
+                        </DialogHeader>
+                        <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
+                      </DialogContent>
+                    </Dialog>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardContent className="p-6">
                     <h3 className="font-semibold text-foreground mb-3 text-lg">About the Artisan</h3>
@@ -190,6 +229,28 @@ export default function ProductPage() {
                 ${product.price}
               </Badge>
             </div>
+
+            {/* View Reel Button */}
+            <Card>
+              <CardContent className="p-4">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button className="w-full bg-black hover:bg-gray-800 text-white">
+                      <Play className="mr-2 h-4 w-4" />
+                      View Product Reel
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[85vh] sm:max-h-[95vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
+                      <DialogTitle>{product.title} - Product Reel</DialogTitle>
+                    </DialogHeader>
+                    <div className="flex-1 min-h-0">
+                      <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </CardContent>
+            </Card>
 
             {/* Artisan Info */}
             <Card>

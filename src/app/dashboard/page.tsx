@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { Plus, Package, DollarSign, Eye, ArrowLeft, Image as ImageIcon, Sparkles, TrendingUp, CalendarDays, ShoppingBag } from "lucide-react"
+import { Plus, Package, DollarSign, Eye, ArrowLeft, Image as ImageIcon, Sparkles, TrendingUp, CalendarDays, ShoppingBag, Download, Play } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,6 +55,21 @@ async function fetchArtisanProducts() {
     throw new Error('Failed to fetch products')
   }
   return response.json()
+}
+
+// Enhanced Video Player Component
+function EnhancedVideoPlayer({ videoUrl, title }: { videoUrl: string; title: string }) {
+  return (
+    <div className="bg-black rounded-lg overflow-hidden select-none video-container" style={{ height: '100%', minHeight: '400px' }}>
+      <video 
+        src={videoUrl} 
+        controls 
+        className="w-full h-full"
+        onContextMenu={(e) => e.preventDefault()}
+        onDragStart={(e) => e.preventDefault()}
+      />
+    </div>
+  )
 }
 
 export default function DashboardPage() {
@@ -276,6 +291,26 @@ export default function DashboardPage() {
       return text;
     }
     return `${text.substring(0, length)}...`;
+  };
+
+  const handleDownloadReel = (videoUrl: string, title: string) => {
+    fetch(videoUrl)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/[^a-z0-9]/gi, '_')}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        toast.success(t("dashboard.downloadStarted") || "Download started");
+      })
+      .catch(error => {
+        console.error('Download error:', error);
+        toast.error(t("dashboard.downloadFailed") || "Download failed");
+      });
   };
 
   return (
@@ -609,6 +644,33 @@ export default function DashboardPage() {
                                   <Eye size={12} className="mr-1" />
                                   <span className="hidden sm:inline">{t("dashboard.view")}</span>
                                 </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="text-xs sm:text-sm px-2 sm:px-3"
+                                    >
+                                      <Play size={12} className="mr-1" />
+                                      <span className="hidden sm:inline">Reel</span>
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="sm:max-w-[800px] w-[95vw] max-h-[90vh] flex flex-col">
+                                    <DialogHeader className="flex-shrink-0 pb-4">
+                                      <DialogTitle>{product.title} - Product Reel</DialogTitle>
+                                    </DialogHeader>
+                                    <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
+                                    <div className="flex justify-end pt-4 flex-shrink-0">
+                                      <Button
+                                        onClick={() => handleDownloadReel(product.videoUrl, product.title)}
+                                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                                      >
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Download Reel
+                                      </Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
                                 {stats?.productStats && (
                                   <ProductStatsDialog productStats={stats.productStats.find(p => p.id === product.id)!} />
                                 )}

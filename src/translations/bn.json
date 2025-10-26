@@ -190,7 +190,8 @@
     "addFirstProduct": "আপনার প্রথম পণ্য যোগ করুন",
     "view": "দেখুন",
     "added": "যোগ করা হয়েছে",
-    "totalSalesTooltip": "মোট বিক্রয়"
+    "totalSalesTooltip": "মোট বিক্রয়",
+    "downloadStarted": "ডাউনলোড শুরু হয়েছে..."
   },
   "onboarding": {
     "welcome": "স্বাগতম",

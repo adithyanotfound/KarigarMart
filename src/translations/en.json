@@ -190,7 +190,8 @@
     "addFirstProduct": "Add Your First Product",
     "view": "View",
     "added": "Added",
-    "totalSalesTooltip": "Total Sales"
+    "totalSalesTooltip": "Total Sales",
+    "downloadStarted": "Download started..."
   },
   "onboarding": {
     "welcome": "Welcome",

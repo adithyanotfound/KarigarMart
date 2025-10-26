@@ -190,7 +190,8 @@
     "addFirstProduct": "तुमचे पहिले उत्पादन जोडा",
     "view": "पहा",
     "added": "जोडलेले",
-    "totalSalesTooltip": "एकूण विक्री"
+    "totalSalesTooltip": "एकूण विक्री",
+    "downloadStarted": "डाउनलोड शुरू होत आहे..."
   },
   "onboarding": {
     "welcome": "स्वागत आहे",

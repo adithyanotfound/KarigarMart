@@ -180,7 +180,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
   }
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-sm border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-md border-b border-white/20 shadow-lg">
       {/* Mobile Search Expanded State */}
       {isMobileSearchExpanded ? (
         <div className="mobile-search-container flex items-center px-4 py-3">
@@ -221,7 +221,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
       ) : (
         <div className="flex items-center justify-between px-4 py-3">
           {/* Logo */}
-          <div className="text-white font-bold text-lg">
+          <div className="text-white font-bold text-lg drop-shadow-lg">
             KarigarMart
           </div>
 

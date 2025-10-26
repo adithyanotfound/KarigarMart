@@ -190,7 +190,8 @@
     "addFirstProduct": "તમારી પ્રથમ પ્રોડક્ટ ઉમેરો",
     "view": "જુઓ",
     "added": "ઉમેરેલ",
-    "totalSalesTooltip": "કુલ વેચાણ"
+    "totalSalesTooltip": "કુલ વેચાણ",
+    "downloadStarted": "ડાઉનલોડ શરૂ થઈ રહ્યું છે..."
   },
   "onboarding": {
     "welcome": "સ્વાગત છે",

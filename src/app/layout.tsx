@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthSessionProvider } from "@/components/providers/session-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { VideoSettingsProvider } from "@/components/providers/video-settings-provider";
+import { LanguageProvider } from "@/contexts/language-context";
 import { PWAPrompt } from "@/components/pwa-prompt";
 import { EthereumFix } from "@/components/ethereum-fix";
 // Removed getServerSession to prevent dynamic server usage
@@ -55,12 +56,14 @@ export default function RootLayout({
       >
         <QueryProvider>
           <AuthSessionProvider>
-            <VideoSettingsProvider>
-              <EthereumFix />
-              {children}
-              <PWAPrompt />
-              <Toaster richColors position="bottom-left" />
-            </VideoSettingsProvider>
+            <LanguageProvider>
+              <VideoSettingsProvider>
+                <EthereumFix />
+                {children}
+                <PWAPrompt />
+                <Toaster richColors position="bottom-left" />
+              </VideoSettingsProvider>
+            </LanguageProvider>
           </AuthSessionProvider>
         </QueryProvider>
         <Script id="sw-register" strategy="afterInteractive">

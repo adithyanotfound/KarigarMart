@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { AuthGuard } from "@/components/auth-guard"
+import { useLanguage } from "@/contexts/language-context"
 
 async function fetchUserProfile() {
   const response = await fetch('/api/user/profile')
@@ -27,6 +28,7 @@ export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLanguage()
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -60,7 +62,7 @@ export default function ProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-profile'] })
       setIsEditing(false)
-      toast.success("Profile updated successfully!")
+      toast.success(t("profile.profile") + " " + t("common.success"))
     },
     onError: (error: Error) => {
       toast.error(error.message)
@@ -85,7 +87,7 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     if (!formData.name.trim()) {
-      toast.error("Name is required")
+      toast.error(t("auth.fullName") + " " + t("common.error"))
       return
     }
     updateProfileMutation.mutate(formData)
@@ -108,9 +110,9 @@ export default function ProfilePage() {
             className="text-foreground"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Back
+            {t("common.back")}
           </Button>
-          <h1 className="font-semibold text-foreground">Profile</h1>
+          <h1 className="font-semibold text-foreground">{t("profile.profile")}</h1>
           <div className="w-16" /> {/* Spacer */}
         </div>
       </div>
@@ -118,11 +120,11 @@ export default function ProfilePage() {
       <div className="container mx-auto px-4 py-6 max-w-md">
         {isLoading ? (
           <div className="text-center py-8">
-            <div className="text-muted-foreground">Loading profile...</div>
+            <div className="text-muted-foreground">{t("common.loading")}</div>
           </div>
         ) : error ? (
           <div className="text-center py-8">
-            <div className="text-red-500">Error loading profile</div>
+            <div className="text-red-500">{t("common.error")}</div>
           </div>
         ) : (
           <motion.div
@@ -139,12 +141,12 @@ export default function ProfilePage() {
                 {isEditing ? (
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Name</Label>
+                      <Label htmlFor="name">{t("auth.fullName")}</Label>
                       <Input
                         id="name"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Enter your name"
+                        placeholder={t("auth.enterFullName")}
                       />
                     </div>
                   </div>
@@ -156,7 +158,7 @@ export default function ProfilePage() {
                         variant={profile?.role === 'ARTISAN' ? 'default' : 'secondary'}
                         className={profile?.role === 'ARTISAN' ? 'bg-black text-white' : ''}
                       >
-                        {profile?.role === 'ARTISAN' ? 'Artisan' : 'Customer'}
+                        {profile?.role === 'ARTISAN' ? t("auth.artisan") : t("auth.customer")}
                       </Badge>
                     </CardDescription>
                   </>
@@ -170,7 +172,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar size={16} className="text-muted-foreground" />
                   <span className="text-foreground">
-                    Joined {new Date(profile?.createdAt).toLocaleDateString()}
+                    {t("profile.profile")} {new Date(profile?.createdAt).toLocaleDateString()}
                   </span>
                 </div>
               </CardContent>
@@ -180,28 +182,28 @@ export default function ProfilePage() {
             {profile?.role === 'ARTISAN' && profile?.artisanProfile && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Your Story</CardTitle>
+                  <CardTitle className="text-lg">{t("profile.profile")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {isEditing ? (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="story">Your Artisan Journey</Label>
+                        <Label htmlFor="story">{t("profile.profile")}</Label>
                         <Textarea
                           id="story"
                           value={formData.story}
                           onChange={(e) => setFormData({ ...formData, story: e.target.value })}
-                          placeholder="Tell your story..."
+                          placeholder={t("profile.profile")}
                           className="min-h-[100px]"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="about">About You</Label>
+                        <Label htmlFor="about">{t("profile.profile")}</Label>
                         <Textarea
                           id="about"
                           value={formData.about}
                           onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                          placeholder="Tell us about yourself..."
+                          placeholder={t("profile.profile")}
                           className="min-h-[100px]"
                         />
                       </div>
@@ -209,12 +211,12 @@ export default function ProfilePage() {
                   ) : (
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-foreground mb-2">Your Journey</h4>
+                        <h4 className="font-semibold text-foreground mb-2">{t("profile.profile")}</h4>
                         <p className="text-foreground">{profile.artisanProfile.story}</p>
                       </div>
                       {profile.artisanProfile.about && (
                         <div>
-                          <h4 className="font-semibold text-foreground mb-2">About You</h4>
+                          <h4 className="font-semibold text-foreground mb-2">{t("profile.profile")}</h4>
                           <p className="text-foreground">{profile.artisanProfile.about}</p>
                         </div>
                       )}
@@ -234,7 +236,7 @@ export default function ProfilePage() {
                     className="flex-1 bg-black hover:bg-gray-800"
                   >
                     <Save size={16} className="mr-2" />
-                    {updateProfileMutation.isPending ? "Saving..." : "Save"}
+                    {updateProfileMutation.isPending ? t("common.loading") : t("common.save")}
                   </Button>
                   <Button
                     variant="outline"
@@ -243,7 +245,7 @@ export default function ProfilePage() {
                     className="flex-1"
                   >
                     <X size={16} className="mr-2" />
-                    Cancel
+                    {t("common.cancel")}
                   </Button>
                 </div>
               ) : (
@@ -254,7 +256,7 @@ export default function ProfilePage() {
                     className="w-full"
                   >
                     <Edit size={16} className="mr-2" />
-                    Edit Profile
+                    {t("profile.editProfile")}
                   </Button>
                   
                   {profile?.role === 'ARTISAN' && (
@@ -263,7 +265,7 @@ export default function ProfilePage() {
                       className="w-full bg-black hover:bg-gray-800"
                     >
                       <Settings size={16} className="mr-2" />
-                      Go to Dashboard
+                      {t("navigation.dashboard")}
                     </Button>
                   )}
                 </>
@@ -275,20 +277,18 @@ export default function ProfilePage() {
                 className="w-full"
               >
                 <LogOut size={16} className="mr-2" />
-                Sign Out
+                {t("auth.signOut")}
               </Button>
             </div>
 
             {/* App Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">About KarigarMart</CardTitle>
+                <CardTitle className="text-lg">{t("profile.profile")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  A social marketplace for discovering and purchasing unique artisan products 
-                  through short-form video content. Connect with talented artisans and discover 
-                  their amazing handcrafted products.
+                  {t("profile.profile")}
                 </p>
               </CardContent>
             </Card>

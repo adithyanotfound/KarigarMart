@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AuthGuard } from "@/components/auth-guard"
 import { ArtisanOnboardingGuard } from "@/components/artisan-onboarding-guard"
+import { useLanguage } from "@/contexts/language-context"
 import Image from "next/image"
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from "recharts"
 import ProductStatsDialog from "@/components/product-stats-dialog";
@@ -60,6 +61,7 @@ export default function DashboardPage() {
   const { data: session } = useSession()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const { t } = useLanguage()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -108,7 +110,7 @@ export default function DashboardPage() {
       setIsUploading(false)
       setShowExitWarning(false)
       handleCloseDialog(true)
-      toast.success("Product created successfully!")
+      toast.success(t("common.success"))
     },
     onError: (error: Error) => {
       setError(error.message)
@@ -153,11 +155,11 @@ export default function DashboardPage() {
     const file = e.target.files?.[0]
     if (file) {
       if (!file.type.startsWith('image/')) {
-        setError("Please select a valid image file")
+        setError(t("common.error"))
         return
       }
       if (file.size > 5 * 1024 * 1024) {
-        setError("Image size must be less than 5MB")
+        setError(t("common.error"))
         return
       }
       setSelectedFile(file)
@@ -175,7 +177,7 @@ export default function DashboardPage() {
     setError("")
 
     if (!formData.title.trim() || !formData.price.trim() || isNaN(Number(formData.price)) || Number(formData.price) <= 0 || !selectedFile) {
-      setError("Please fill all fields correctly.")
+      setError(t("common.error"))
       return
     }
 
@@ -203,7 +205,7 @@ export default function DashboardPage() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (showExitWarning) {
         e.preventDefault()
-        e.returnValue = 'Your product is being created. Are you sure you want to leave?'
+        e.returnValue = t("dashboard.dontCloseWindow")
         return e.returnValue
       }
     }
@@ -213,7 +215,7 @@ export default function DashboardPage() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload)
     }
-  }, [showExitWarning])
+  }, [showExitWarning, t])
 
   if (session && session.user.role !== 'ARTISAN') {
     router.push('/')
@@ -262,7 +264,7 @@ export default function DashboardPage() {
       return (
         <div className="bg-white p-2 border border-gray-300 rounded shadow-lg">
           <p className="font-bold">{label}</p>
-          <p className="text-sm">Total Sales: ${payload[0].value.toFixed(2)}</p>
+          <p className="text-sm">{t("dashboard.totalSalesTooltip")}: ${payload[0].value.toFixed(2)}</p>
         </div>
       );
     }
@@ -291,12 +293,12 @@ export default function DashboardPage() {
                     className="text-foreground"
                   >
                     <ArrowLeft size={20} className="mr-2" />
-                    <span className="hidden sm:inline">Back to Feed</span>
-                    <span className="sm:hidden">Back</span>
+                    <span className="hidden sm:inline">{t("dashboard.backToFeed")}</span>
+                    <span className="sm:hidden">{t("dashboard.back")}</span>
                   </Button>
                   <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">Artisan Dashboard</h1>
-                    <p className="text-sm sm:text-base text-muted-foreground">Welcome back, {session?.user.name}</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("dashboard.artisanDashboard")}</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">{t("dashboard.welcomeBack")}, {session?.user.name}</p>
                   </div>
                 </div>
                 
@@ -304,14 +306,14 @@ export default function DashboardPage() {
                   <DialogTrigger asChild>
                     <Button className="bg-black hover:bg-gray-800 w-full sm:w-auto">
                       <Plus size={16} className="mr-2" />
-                      Add Product
+                      {t("dashboard.addProduct")}
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
                   <DialogHeader className="space-y-2">
-                   <DialogTitle className="text-lg sm:text-xl">Add New Product</DialogTitle>
+                   <DialogTitle className="text-lg sm:text-xl">{t("dashboard.addNewProduct")}</DialogTitle>
                    <DialogDescription className="text-sm">
-                     Create a new product to showcase in the video feed.
+                     {t("dashboard.createNewProduct")}
                    </DialogDescription>
                  </DialogHeader>
                  <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -322,30 +324,30 @@ export default function DashboardPage() {
                    )}
 
                    <div className="space-y-2">
-                     <Label htmlFor="title" className="text-sm font-medium">Product Name</Label>
+                     <Label htmlFor="title" className="text-sm font-medium">{t("dashboard.productName")}</Label>
                      <Input
                        id="title"
                        value={formData.title}
                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                       placeholder="Enter product name"
+                       placeholder={t("dashboard.enterProductName")}
                        disabled={createProductMutation.isPending}
                        className="h-10 sm:h-11"
                      />
                    </div>
 
                    <div className="space-y-2">
-                     <Label className="text-sm font-medium">AI-Generated Content</Label>
+                     <Label className="text-sm font-medium">{t("dashboard.aiGeneratedContent")}</Label>
                      <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-md">
                        <Sparkles size={16} />
-                       <span>AI will automatically generate description and video advertisement</span>
+                       <span>{t("dashboard.aiWillGenerate")}</span>
                      </div>
                      <p className="text-xs text-muted-foreground">
-                       Upload an image below and AI will analyze it to create a detailed product description and generate a custom 8-second video advertisement.
+                       {t("dashboard.aiDescription")}
                      </p>
                    </div>
 
                    <div className="space-y-2">
-                     <Label htmlFor="price" className="text-sm font-medium">Price ($)</Label>
+                     <Label htmlFor="price" className="text-sm font-medium">{t("dashboard.price")}</Label>
                      <Input
                        id="price"
                        type="number"
@@ -360,7 +362,7 @@ export default function DashboardPage() {
                    </div>
 
                    <div className="space-y-2">
-                     <Label htmlFor="imageUpload" className="text-sm font-medium">Product Image</Label>
+                     <Label htmlFor="imageUpload" className="text-sm font-medium">{t("dashboard.productImage")}</Label>
                      
                      <div className="relative">
                        <Input
@@ -397,13 +399,13 @@ export default function DashboardPage() {
                            </button>
                          </div>
                          <p className="text-xs text-muted-foreground mt-1">
-                           Selected: {selectedFile?.name}
+                           {t("dashboard.selected")}: {selectedFile?.name}
                          </p>
                        </div>
                      )}
 
                      <p className="text-xs text-muted-foreground">
-                       Upload an image file (max 5MB)
+                       {t("dashboard.uploadImageFile")}
                      </p>
                    </div>
 
@@ -412,9 +414,9 @@ export default function DashboardPage() {
                        <div className="flex items-center gap-3">
                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
                          <div>
-                           <p className="text-black font-medium">Creating your product...</p>
+                           <p className="text-black font-medium">{t("dashboard.creatingProduct")}</p>
                            <p className="text-gray-600 text-sm mt-1">
-                             This process takes approximately 1 minute. Please don't close this window.
+                             {t("dashboard.processTakesMinute")}
                            </p>
                          </div>
                        </div>
@@ -426,9 +428,9 @@ export default function DashboardPage() {
                        <div className="flex items-center gap-3">
                          <div className="text-black">⚠️</div>
                          <div>
-                           <p className="text-black font-medium">Please don't close this window!</p>
+                           <p className="text-black font-medium">{t("dashboard.dontCloseWindow")}</p>
                            <p className="text-gray-600 text-sm mt-1">
-                             Your product is being created. Closing the window may cause your changes to be lost.
+                             {t("dashboard.productBeingCreated")}
                            </p>
                          </div>
                        </div>
@@ -443,14 +445,14 @@ export default function DashboardPage() {
                        className="flex-1 h-10 sm:h-11 order-2 sm:order-1"
                        disabled={createProductMutation.isPending || isUploading}
                      >
-                       Cancel
+                       {t("dashboard.cancel")}
                      </Button>
                      <Button
                        type="submit"
                        className="flex-1 bg-black hover:bg-gray-800 h-10 sm:h-11 order-1 sm:order-2"
                        disabled={createProductMutation.isPending || isUploading || !selectedFile}
                      >
-                       {isUploading ? "Uploading..." : createProductMutation.isPending ? "Creating..." : "Create Product"}
+                       {isUploading ? t("dashboard.uploading") : createProductMutation.isPending ? t("dashboard.creating") : t("dashboard.createProduct")}
                      </Button>
                    </div>
                  </form>
@@ -464,7 +466,7 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("dashboard.totalSales")}</CardTitle>
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -474,7 +476,7 @@ export default function DashboardPage() {
               
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sales This Month</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("dashboard.salesThisMonth")}</CardTitle>
                   <CalendarDays className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -484,7 +486,7 @@ export default function DashboardPage() {
               
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+                  <CardTitle className="text-sm font-medium">{t("dashboard.totalProducts")}</CardTitle>
                   <Package className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -496,8 +498,8 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <Card>
                 <CardHeader>
-                  <CardTitle>Monthly Sales</CardTitle>
-                  <CardDescription>Your sales performance over the past few months.</CardDescription>
+                  <CardTitle>{t("dashboard.monthlySales")}</CardTitle>
+                  <CardDescription>{t("dashboard.salesPerformance")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
@@ -513,8 +515,8 @@ export default function DashboardPage() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Products by Revenue</CardTitle>
-                  <CardDescription>Your product sales performance.</CardDescription>
+                  <CardTitle>{t("dashboard.productsByRevenue")}</CardTitle>
+                  <CardDescription>{t("dashboard.productSalesPerformance")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
@@ -547,27 +549,27 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">Your Products</h2>
+              <h2 className="text-lg sm:text-xl font-bold text-foreground mb-4">{t("dashboard.yourProducts")}</h2>
               
               {isLoading ? (
                 <div className="text-center py-8">
-                  <div className="text-muted-foreground">Loading products...</div>
+                  <div className="text-muted-foreground">{t("dashboard.loadingProducts")}</div>
                 </div>
               ) : fetchError ? (
                 <div className="text-center py-8">
-                  <div className="text-red-500">Error loading products. Please try again.</div>
+                  <div className="text-red-500">{t("dashboard.errorLoadingProducts")}</div>
                 </div>
               ) : products.length === 0 ? (
                 <div className="text-center py-8 sm:py-12 px-4">
                   <Package size={40} className="mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">No products yet</h3>
-                  <p className="text-sm sm:text-base text-muted-foreground mb-4">Create your first product to start showcasing your work!</p>
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2">{t("dashboard.noProductsYet")}</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mb-4">{t("dashboard.createFirstProduct")}</p>
                   <Button 
                     onClick={() => setIsDialogOpen(true)}
                     className="bg-black hover:bg-gray-800 w-full sm:w-auto"
                   >
                     <Plus size={16} className="mr-2" />
-                    Add Your First Product
+                    {t("dashboard.addFirstProduct")}
                   </Button>
                 </div>
               ) : (
@@ -605,7 +607,7 @@ export default function DashboardPage() {
                                   className="text-xs sm:text-sm px-2 sm:px-3"
                                 >
                                   <Eye size={12} className="mr-1" />
-                                  <span className="hidden sm:inline">View</span>
+                                  <span className="hidden sm:inline">{t("dashboard.view")}</span>
                                 </Button>
                                 {stats?.productStats && (
                                   <ProductStatsDialog productStats={stats.productStats.find(p => p.id === product.id)!} />
@@ -613,7 +615,7 @@ export default function DashboardPage() {
                             </div>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Added {new Date(product.publishDate).toLocaleDateString()}
+                            {t("dashboard.added")} {new Date(product.publishDate).toLocaleDateString()}
                           </p>
                         </CardContent>
                       </Card>

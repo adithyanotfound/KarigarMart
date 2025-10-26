@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AuthGuard } from "@/components/auth-guard"
+import { LanguageSelector } from "@/components/language-selector"
+import { useLanguage } from "@/contexts/language-context"
 import Link from "next/link"
 
 export default function SignInPage() {
@@ -20,6 +22,7 @@ export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { t } = useLanguage()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,10 +37,10 @@ export default function SignInPage() {
       })
 
       if (result?.error) {
-        setError("Invalid email or password")
-        toast.error("Invalid email or password")
+        setError(t("auth.invalidCredentials"))
+        toast.error(t("auth.invalidCredentials"))
       } else {
-        toast.success("Welcome back!")
+        toast.success(t("auth.welcomeBackMessage"))
         // Get updated session to check user role
         const session = await getSession()
         
@@ -48,8 +51,8 @@ export default function SignInPage() {
         }
       }
     } catch {
-      setError("An error occurred. Please try again.")
-      toast.error("An error occurred. Please try again.")
+      setError(t("common.error"))
+      toast.error(t("common.error"))
     } finally {
       setIsLoading(false)
     }
@@ -65,9 +68,12 @@ export default function SignInPage() {
         >
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
+            <div className="flex justify-end mb-4">
+              <LanguageSelector />
+            </div>
+            <CardTitle className="text-2xl font-bold">{t("auth.welcomeBack")}</CardTitle>
             <CardDescription>
-              Sign in to your KarigarMart account
+              {t("auth.signIn")} {t("auth.joinKarigarMart")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,27 +85,27 @@ export default function SignInPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder={t("auth.enterEmail")}
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
+                    placeholder={t("auth.enterPassword")}
                     required
                     disabled={isLoading}
                   />
@@ -125,28 +131,28 @@ export default function SignInPage() {
                 className="w-full bg-black hover:bg-gray-800" 
                 disabled={isLoading}
               >
-                {isLoading ? "Signing in..." : "Sign In"}
+                {isLoading ? t("auth.signingIn") : t("auth.signIn")}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                {t("auth.dontHaveAccount")}{" "}
                 <Link 
                   href="/auth/signup" 
                   className="text-gray-600 hover:text-black font-medium"
                 >
-                  Sign up
+                  {t("auth.signUp")}
                 </Link>
               </p>
             </div>
 
             <div className="mt-4 p-3 bg-muted rounded-md">
               <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo Accounts:</strong><br />
-                User: user@example.com<br />
-                Artisan: artisan1@example.com<br />
-                Password: password123
+                <strong>{t("auth.demoAccounts")}:</strong><br />
+                {t("auth.userDemo")}<br />
+                {t("auth.artisanDemo")}<br />
+                {t("auth.demoPassword")}
               </p>
             </div>
           </CardContent>

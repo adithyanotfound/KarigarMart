@@ -1,11 +1,12 @@
 "use client"
 
-import { ShoppingCart, User, LogOut, Search, X, Package, LayoutDashboard } from "lucide-react"
+import { ShoppingCart, User, LogOut, Search, X, Package, LayoutDashboard, Globe } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useCart } from "@/hooks/use-cart"
+import { useLanguage } from "@/contexts/language-context"
 import { useState, useEffect, useRef } from "react"
 import { Input } from "@/components/ui/input"
 import {
@@ -24,6 +25,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const { cartCount } = useCart()
+  const { t } = useLanguage()
   
   // Search state
   const [searchQuery, setSearchQuery] = useState("")
@@ -53,6 +55,10 @@ export function Navigation({ isHidden = false }: NavigationProps) {
 
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' })
+  }
+
+  const handleLanguageSettings = () => {
+    router.push('/language-settings')
   }
 
   // Search functions
@@ -181,14 +187,14 @@ export function Navigation({ isHidden = false }: NavigationProps) {
           <form onSubmit={handleMobileSearchSubmit} className="flex-1 flex items-center gap-3">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                ref={mobileSearchInputRef}
-                type="text"
-                placeholder="Search products..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-300 focus:bg-white/20 focus:border-white/40"
-              />
+                <Input
+                  ref={mobileSearchInputRef}
+                  type="text"
+                  placeholder={t("navigation.searchProducts")}
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-300 focus:bg-white/20 focus:border-white/40"
+                />
               {searchQuery && (
                 <Button
                   type="button"
@@ -226,7 +232,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={t("navigation.searchProducts")}
                   value={searchQuery}
                   onChange={handleSearchChange}
                   className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder:text-gray-300 focus:bg-white/20 focus:border-white/40"
@@ -250,7 +256,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                   {isSearching ? (
                     <div className="p-3 text-center text-gray-500">
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500 mx-auto"></div>
-                      <span className="ml-2">Searching...</span>
+                      <span className="ml-2">{t("navigation.searching")}</span>
                     </div>
                   ) : searchResults.length > 0 ? (
                     <div className="py-1">
@@ -267,7 +273,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                     </div>
                   ) : searchQuery.trim() && !isSearching ? (
                     <div className="p-3 text-center text-gray-500">
-                      No products found for "{searchQuery}"
+                      {t("navigation.noProductsFound", { query: searchQuery })}
                     </div>
                   ) : null}
                 </div>
@@ -319,14 +325,14 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                 <DropdownMenuContent align="end" className="bg-[#1a1a1a] border-[#404040]">
                   <DropdownMenuItem onClick={handleProfileClick} className="text-white hover:bg-[#404040]">
                     <User className="mr-2 h-4 w-4" />
-                    Profile
+                    {t("navigation.profile")}
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     onClick={() => router.push('/orders')} 
                     className="text-white hover:bg-[#404040]"
                   >
                     <Package className="mr-2 h-4 w-4" />
-                    Past Orders
+                    {t("navigation.pastOrders")}
                   </DropdownMenuItem>
                   {session.user.role === 'ARTISAN' && (
                     <DropdownMenuItem 
@@ -334,13 +340,20 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                       className="text-white hover:bg-[#404040]"
                     >
                       <LayoutDashboard className="mr-2 h-4 w-4" />
-                      Dashboard
+                      {t("navigation.dashboard")}
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem 
+                    onClick={handleLanguageSettings} 
+                    className="text-white hover:bg-[#404040]"
+                  >
+                    <Globe className="mr-2 h-4 w-4" />
+                    {t("language.changeLanguage")}
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-[#404040]" />
                   <DropdownMenuItem onClick={handleSignOut} className="text-white hover:bg-[#404040]">
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out
+                    {t("auth.signOut")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -351,7 +364,7 @@ export function Navigation({ isHidden = false }: NavigationProps) {
                 className="text-white hover:bg-white/10"
                 onClick={() => router.push('/auth/signin')}
               >
-                Sign In
+                {t("auth.signIn")}
               </Button>
             )}
           </div>

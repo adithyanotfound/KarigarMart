@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Trash2, Plus, Minus, ShoppingBag } from "lucide-react"
 import { useCart } from "@/hooks/use-cart"
+import { useLanguage } from "@/contexts/language-context"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -13,12 +14,13 @@ import Image from "next/image"
 export default function CartPage() {
   const router = useRouter()
   const { cart, isLoading, error, updateQuantity, removeItem } = useCart()
+  const { t } = useLanguage()
 
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading cart...</div>
+        <div className="text-foreground">{t("cart.loadingCart")}</div>
       </div>
     )
   }
@@ -26,7 +28,7 @@ export default function CartPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Error loading cart</div>
+        <div className="text-foreground">{t("cart.errorLoadingCart")}</div>
       </div>
     )
   }
@@ -50,9 +52,9 @@ export default function CartPage() {
             className="text-foreground"
           >
             <ArrowLeft size={20} className="mr-2" />
-            Back
+            {t("cart.back")}
           </Button>
-          <h1 className="font-semibold text-foreground">Shopping Cart</h1>
+          <h1 className="font-semibold text-foreground">{t("cart.shoppingCart")}</h1>
           <div className="w-16" /> {/* Spacer */}
         </div>
       </div>
@@ -90,7 +92,7 @@ export default function CartPage() {
                           {item.product.title}
                         </h3>
                         <p className="text-sm text-muted-foreground">
-                          by {item.product.artisan.user.name}
+                          {t("cart.by")} {item.product.artisan.user.name}
                         </p>
                         <p className="text-lg font-semibold text-black mt-1">
                           ${item.product.price}
@@ -152,10 +154,10 @@ export default function CartPage() {
         ) : (
           <div className="flex flex-col items-center justify-center py-20">
             <ShoppingBag size={64} className="text-muted-foreground mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">Your cart is empty</h2>
-            <p className="text-muted-foreground mb-6">Start adding some amazing products!</p>
+            <h2 className="text-xl font-semibold text-foreground mb-2">{t("cart.cartEmpty")}</h2>
+            <p className="text-muted-foreground mb-6">{t("cart.startAddingProducts")}</p>
             <Button onClick={() => router.push('/')} className="bg-black hover:bg-gray-800">
-              Browse Products
+              {t("cart.browseProducts")}
             </Button>
           </div>
         )}
@@ -167,7 +169,7 @@ export default function CartPage() {
           <div className="max-w-md mx-auto space-y-3">
             {/* Total */}
             <div className="flex justify-between items-center">
-              <span className="text-lg font-semibold text-foreground">Total:</span>
+              <span className="text-lg font-semibold text-foreground">{t("cart.total")}:</span>
               <span className="text-2xl font-bold text-black">
                 ${cart.total.toFixed(2)}
               </span>
@@ -178,7 +180,7 @@ export default function CartPage() {
               className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-3"
               onClick={handleCheckout}
             >
-              Proceed to Checkout
+              {t("cart.proceedToCheckout")}
             </Button>
           </div>
         </div>

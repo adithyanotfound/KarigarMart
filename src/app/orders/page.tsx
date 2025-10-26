@@ -7,6 +7,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AuthGuard } from "@/components/auth-guard"
+import { useLanguage } from "@/contexts/language-context"
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 
@@ -49,6 +50,7 @@ const getOrderStatus = (createdAt: string): { status: 'RECEIVED' | 'IN_TRANSIT' 
 
 export default function OrdersPage() {
   const router = useRouter()
+  const { t } = useLanguage()
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -58,12 +60,12 @@ export default function OrdersPage() {
       try {
         const response = await fetch('/api/order');
         if (!response.ok) {
-          throw new Error('Failed to fetch orders');
+          throw new Error(t("orders.errorLoadingOrders"));
         }
         const data = await response.json();
         setOrders(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        setError(err instanceof Error ? err.message : t("common.error"));
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +77,7 @@ export default function OrdersPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Loading your orders...</div>
+        <div className="text-foreground">{t("orders.loadingOrders")}</div>
       </div>
     )
   }
@@ -83,7 +85,7 @@ export default function OrdersPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-foreground">Error: {error}</div>
+        <div className="text-foreground">{t("orders.errorLoadingOrders")}: {error}</div>
       </div>
     )
   }
@@ -101,9 +103,9 @@ export default function OrdersPage() {
               className="text-foreground"
             >
               <ArrowLeft size={20} className="mr-2" />
-              Home
+              {t("orders.home")}
             </Button>
-            <h1 className="font-semibold text-foreground">My Orders</h1>
+            <h1 className="font-semibold text-foreground">{t("orders.myOrders")}</h1>
             <div className="w-16" /> {/* Spacer */}
           </div>
         </div>
@@ -123,7 +125,7 @@ export default function OrdersPage() {
                   <CardHeader>
                     <div className="flex justify-between items-center">
                       <div>
-                        <CardTitle className="text-lg">Order #{order.id.substring(0, 8)}</CardTitle>
+                        <CardTitle className="text-lg">{t("orders.order")} #{order.id.substring(0, 8)}</CardTitle>
                         <p className="text-sm text-muted-foreground">
                           {new Date(order.createdAt).toLocaleDateString()}
                         </p>
@@ -133,7 +135,9 @@ export default function OrdersPage() {
                         status === 'IN_TRANSIT' ? 'secondary' : 'outline'
                       } className="flex items-center gap-1">
                         <StatusIcon size={14} />
-                        {status.replace('_', ' ')}
+                        {status === 'RECEIVED' ? t("orders.received") : 
+                         status === 'IN_TRANSIT' ? t("orders.inTransit") : 
+                         t("orders.delivered")}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -150,14 +154,14 @@ export default function OrdersPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-semibold text-foreground truncate">{item.product.title}</h4>
-                          <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                          <p className="text-sm text-muted-foreground">{t("orders.quantity")}: {item.quantity}</p>
                         </div>
                         <p className="font-semibold text-foreground">${(Number(item.price) * item.quantity).toFixed(2)}</p>
                       </div>
                     ))}
                     <div className="border-t pt-2 mt-2 flex justify-end">
                       <p className="text-lg font-bold text-foreground">
-                        Total: ${Number(order.total).toFixed(2)}
+                        {t("orders.total")}: ${Number(order.total).toFixed(2)}
                       </p>
                     </div>
                   </CardContent>
@@ -166,8 +170,8 @@ export default function OrdersPage() {
             )})
           ) : (
             <div className="text-center py-20">
-              <h2 className="text-xl font-semibold text-foreground">No orders yet</h2>
-              <p className="text-muted-foreground mt-2">You haven't placed any orders yet. Start shopping!</p>
+              <h2 className="text-xl font-semibold text-foreground">{t("orders.noOrdersYet")}</h2>
+              <p className="text-muted-foreground mt-2">{t("orders.startShopping")}</p>
             </div>
           )}
         </div>

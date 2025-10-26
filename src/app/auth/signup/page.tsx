@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { AuthGuard } from "@/components/auth-guard"
+import { LanguageSelector } from "@/components/language-selector"
+import { useLanguage } from "@/contexts/language-context"
 import Link from "next/link"
 
 export default function SignUpPage() {
@@ -27,6 +29,7 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { t } = useLanguage()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,15 +38,15 @@ export default function SignUpPage() {
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
-      toast.error("Passwords do not match")
+      setError(t("auth.passwordsDoNotMatch"))
+      toast.error(t("auth.passwordsDoNotMatch"))
       setIsLoading(false)
       return
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters long")
-      toast.error("Password must be at least 6 characters long")
+      setError(t("auth.passwordTooShort"))
+      toast.error(t("auth.passwordTooShort"))
       setIsLoading(false)
       return
     }
@@ -66,8 +69,8 @@ export default function SignUpPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'Failed to create account')
-        toast.error(data.error || 'Failed to create account')
+        setError(data.error || t("common.error"))
+        toast.error(data.error || t("common.error"))
         return
       }
 
@@ -79,10 +82,10 @@ export default function SignUpPage() {
       })
 
       if (signInResult?.error) {
-        setError("Account created but failed to sign in. Please try signing in manually.")
-        toast.error("Account created but failed to sign in. Please try signing in manually.")
+        setError(t("common.error"))
+        toast.error(t("common.error"))
       } else {
-        toast.success("Account created successfully!")
+        toast.success(t("auth.accountCreatedSuccessfully"))
         // Redirect based on role
         if (formData.role === 'ARTISAN') {
           router.push('/dashboard') // The ArtisanOnboardingGuard will handle the redirect
@@ -91,8 +94,8 @@ export default function SignUpPage() {
         }
       }
     } catch {
-      setError("An error occurred. Please try again.")
-      toast.error("An error occurred. Please try again.")
+      setError(t("common.error"))
+      toast.error(t("common.error"))
     } finally {
       setIsLoading(false)
     }
@@ -108,9 +111,12 @@ export default function SignUpPage() {
         >
         <Card>
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Join KarigarMart</CardTitle>
+            <div className="flex justify-end mb-4">
+              <LanguageSelector />
+            </div>
+            <CardTitle className="text-2xl font-bold">{t("auth.joinKarigarMart")}</CardTitle>
             <CardDescription>
-              Create your account to start discovering amazing products
+              {t("auth.signUp")} {t("auth.joinKarigarMart")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -122,57 +128,57 @@ export default function SignUpPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
+                <Label htmlFor="name">{t("auth.fullName")}</Label>
                 <Input
                   id="name"
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter your full name"
+                  placeholder={t("auth.enterFullName")}
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("auth.email")}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="Enter your email"
+                  placeholder={t("auth.enterEmail")}
                   required
                   disabled={isLoading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role">Account Type</Label>
+                <Label htmlFor="role">{t("auth.accountType")}</Label>
                 <Select 
                   value={formData.role} 
                   onValueChange={(value) => setFormData({ ...formData, role: value })}
                   disabled={isLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select account type" />
+                    <SelectValue placeholder={t("auth.selectAccountType")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="USER">Customer - Browse and buy products</SelectItem>
-                    <SelectItem value="ARTISAN">Artisan - Sell your handcrafted products</SelectItem>
+                    <SelectItem value="USER">{t("auth.customer")}</SelectItem>
+                    <SelectItem value="ARTISAN">{t("auth.artisan")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("auth.password")}</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Create a password"
+                    placeholder={t("auth.createPassword")}
                     required
                     disabled={isLoading}
                   />
@@ -194,14 +200,14 @@ export default function SignUpPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
                 <div className="relative">
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? "text" : "password"}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    placeholder="Confirm your password"
+                    placeholder={t("auth.confirmYourPassword")}
                     required
                     disabled={isLoading}
                   />
@@ -227,18 +233,18 @@ export default function SignUpPage() {
                 className="w-full bg-black hover:bg-gray-800" 
                 disabled={isLoading}
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
+                {isLoading ? t("auth.creatingAccount") : t("auth.signUp")}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                Already have an account?{" "}
+                {t("auth.alreadyHaveAccount")}{" "}
                 <Link 
                   href="/auth/signin" 
                   className="text-gray-600 hover:text-black font-medium"
                 >
-                  Sign in
+                  {t("auth.signIn")}
                 </Link>
               </p>
             </div>

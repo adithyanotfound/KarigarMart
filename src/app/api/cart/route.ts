@@ -99,7 +99,19 @@ export async function POST(request: NextRequest) {
           quantity: existingItem.quantity + quantity
         },
         include: {
-          product: true
+          product: {
+            include: {
+              artisan: {
+                include: {
+                  user: {
+                    select: {
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       })
     } else {
@@ -111,7 +123,19 @@ export async function POST(request: NextRequest) {
           quantity
         },
         include: {
-          product: true
+          product: {
+            include: {
+              artisan: {
+                include: {
+                  user: {
+                    select: {
+                      name: true
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       })
     }

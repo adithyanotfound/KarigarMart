@@ -59,7 +59,7 @@ export default function ProductPage() {
   const params = useParams()
   const router = useRouter()
   const { data: session } = useSession()
-  const { addToCart } = useCart()
+  const { addToCart, isAddingToCart } = useCart()
   const [quantity, setQuantity] = useState(1)
   const [isLiked, setIsLiked] = useState(false)
 
@@ -304,13 +304,24 @@ export default function ProductPage() {
               variant="outline"
               className="flex-1"
               onClick={handleAddToCart}
+              disabled={isAddingToCart}
             >
-              <ShoppingCart size={16} className="mr-2" />
-              Add to Cart
+              {isAddingToCart ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <ShoppingCart size={16} className="mr-2" />
+                  Add to Cart
+                </>
+              )}
             </Button>
             <Button
               className="flex-1 bg-black hover:bg-gray-800"
               onClick={handleBuyNow}
+              disabled={isAddingToCart}
             >
               Buy Now
             </Button>
@@ -362,14 +373,25 @@ export default function ProductPage() {
                   size="lg"
                   onClick={handleAddToCart}
                   className="px-8"
+                  disabled={isAddingToCart}
                 >
-                  <ShoppingCart size={20} className="mr-2" />
-                  Add to Cart
+                  {isAddingToCart ? (
+                    <>
+                      <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <ShoppingCart size={20} className="mr-2" />
+                      Add to Cart
+                    </>
+                  )}
                 </Button>
                 <Button
                   size="lg"
                   className="bg-black hover:bg-gray-800 px-8"
                   onClick={handleBuyNow}
+                  disabled={isAddingToCart}
                 >
                   Buy Now
                 </Button>

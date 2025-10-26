@@ -10,16 +10,189 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthGuard } from "@/components/auth-guard"
 
+interface PaymentFormData {
+  cardNumber: string
+  expiry: string
+  cvv: string
+  name: string
+  address: string
+  city: string
+  zip: string
+}
+
+interface FormErrors {
+  cardNumber?: string
+  expiry?: string
+  cvv?: string
+  name?: string
+  address?: string
+  city?: string
+  zip?: string
+}
+
 function PaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
+  const [formData, setFormData] = useState<PaymentFormData>({
+    cardNumber: '',
+    expiry: '',
+    cvv: '',
+    name: '',
+    address: '',
+    city: '',
+    zip: ''
+  })
+  const [errors, setErrors] = useState<FormErrors>({})
 
   const total = searchParams.get('total') || '0.00'
 
+  // Format card number with spaces (1234 5678 9012 3456)
+  const formatCardNumber = (value: string): string => {
+    const cleaned = value.replace(/\s/g, '')
+    const match = cleaned.match(/.{1,4}/g)
+    return match ? match.join(' ') : cleaned
+  }
+
+  // Format expiry date (MM/YY)
+  const formatExpiry = (value: string): string => {
+    const cleaned = value.replace(/\D/g, '')
+    if (cleaned.length >= 2) {
+      return cleaned.substring(0, 2) + '/' + cleaned.substring(2, 4)
+    }
+    return cleaned
+  }
+
+  // Validate card number (16 digits)
+  const validateCardNumber = (value: string): boolean => {
+    const cleaned = value.replace(/\s/g, '')
+    return /^\d{16}$/.test(cleaned)
+  }
+
+  // Validate expiry date
+  const validateExpiry = (value: string): boolean => {
+    const match = value.match(/^(\d{2})\/(\d{2})$/)
+    if (!match) return false
+    
+    const month = parseInt(match[1])
+    const year = parseInt(match[2])
+    const currentDate = new Date()
+    const currentYear = currentDate.getFullYear() % 100
+    const currentMonth = currentDate.getMonth() + 1
+    
+    // Check if month is valid (01-12)
+    if (month < 1 || month > 12) return false
+    
+    // Check if year is valid (current year or future)
+    if (year < currentYear) return false
+    if (year === currentYear && month < currentMonth) return false
+    
+    return true
+  }
+
+  // Validate CVV (3 or 4 digits)
+  const validateCVV = (value: string): boolean => {
+    return /^\d{3,4}$/.test(value)
+  }
+
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 16)
+    const formatted = formatCardNumber(value)
+    setFormData({ ...formData, cardNumber: formatted })
+    
+    if (value.length === 16 && !validateCardNumber(formatted)) {
+      setErrors({ ...errors, cardNumber: 'Please enter a valid 16-digit card number' })
+    } else if (value.length === 16) {
+      const newErrors = { ...errors }
+      delete newErrors.cardNumber
+      setErrors(newErrors)
+    }
+  }
+
+  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 4)
+    const formatted = formatExpiry(value)
+    setFormData({ ...formData, expiry: formatted })
+    
+    if (value.length === 4) {
+      if (!validateExpiry(formatted)) {
+        setErrors({ ...errors, expiry: 'Please enter a valid expiry date' })
+      } else {
+        const newErrors = { ...errors }
+        delete newErrors.expiry
+        setErrors(newErrors)
+      }
+    }
+  }
+
+  const handleCVVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 4)
+    setFormData({ ...formData, cvv: value })
+    
+    if (value.length >= 3 && !validateCVV(value)) {
+      setErrors({ ...errors, cvv: 'CVV must be 3 or 4 digits' })
+    } else if (value.length >= 3) {
+      const newErrors = { ...errors }
+      delete newErrors.cvv
+      setErrors(newErrors)
+    }
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/[^a-zA-Z\s]/g, '')
+    setFormData({ ...formData, name: value })
+  }
+
+  const handleAddressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, address: e.target.value })
+  }
+
+  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, city: e.target.value.replace(/[^a-zA-Z\s]/g, '') })
+  }
+
+  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 10)
+    setFormData({ ...formData, zip: value })
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {}
+    
+    if (!validateCardNumber(formData.cardNumber)) {
+      newErrors.cardNumber = 'Please enter a valid 16-digit card number'
+    }
+    if (!validateExpiry(formData.expiry)) {
+      newErrors.expiry = 'Please enter a valid expiry date'
+    }
+    if (!validateCVV(formData.cvv)) {
+      newErrors.cvv = 'CVV must be 3 or 4 digits'
+    }
+    if (!formData.name.trim()) {
+      newErrors.name = 'Please enter cardholder name'
+    }
+    if (!formData.address.trim()) {
+      newErrors.address = 'Please enter street address'
+    }
+    if (!formData.city.trim()) {
+      newErrors.city = 'Please enter city'
+    }
+    if (!formData.zip || formData.zip.length < 5) {
+      newErrors.zip = 'Please enter a valid ZIP code'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
 
   const handlePayment = async () => {
+    // Validate form before proceeding
+    if (!validateForm()) {
+      return
+    }
+    
     setIsProcessing(true)
     
     try {
@@ -113,9 +286,19 @@ function PaymentContent() {
               <Label htmlFor="cardNumber">Card Number</Label>
               <Input
                 id="cardNumber"
+                type="text"
+                inputMode="numeric"
+                maxLength={19}
                 placeholder="1234 5678 9012 3456"
+                value={formData.cardNumber}
+                onChange={handleCardNumberChange}
                 disabled={isProcessing}
+                aria-invalid={!!errors.cardNumber}
+                className={errors.cardNumber ? 'border-destructive' : ''}
               />
+              {errors.cardNumber && (
+                <p className="text-sm text-destructive mt-1">{errors.cardNumber}</p>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -123,17 +306,37 @@ function PaymentContent() {
                 <Label htmlFor="expiry">Expiry Date</Label>
                 <Input
                   id="expiry"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
                   placeholder="MM/YY"
+                  value={formData.expiry}
+                  onChange={handleExpiryChange}
                   disabled={isProcessing}
+                  aria-invalid={!!errors.expiry}
+                  className={errors.expiry ? 'border-destructive' : ''}
                 />
+                {errors.expiry && (
+                  <p className="text-sm text-destructive mt-1">{errors.expiry}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="cvv">CVV</Label>
                 <Input
                   id="cvv"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
                   placeholder="123"
+                  value={formData.cvv}
+                  onChange={handleCVVChange}
                   disabled={isProcessing}
+                  aria-invalid={!!errors.cvv}
+                  className={errors.cvv ? 'border-destructive' : ''}
                 />
+                {errors.cvv && (
+                  <p className="text-sm text-destructive mt-1">{errors.cvv}</p>
+                )}
               </div>
             </div>
             
@@ -141,9 +344,17 @@ function PaymentContent() {
               <Label htmlFor="name">Cardholder Name</Label>
               <Input
                 id="name"
+                type="text"
                 placeholder="John Doe"
+                value={formData.name}
+                onChange={handleNameChange}
                 disabled={isProcessing}
+                aria-invalid={!!errors.name}
+                className={errors.name ? 'border-destructive' : ''}
               />
+              {errors.name && (
+                <p className="text-sm text-destructive mt-1">{errors.name}</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -158,9 +369,17 @@ function PaymentContent() {
               <Label htmlFor="address">Street Address</Label>
               <Input
                 id="address"
+                type="text"
                 placeholder="123 Main Street"
+                value={formData.address}
+                onChange={handleAddressChange}
                 disabled={isProcessing}
+                aria-invalid={!!errors.address}
+                className={errors.address ? 'border-destructive' : ''}
               />
+              {errors.address && (
+                <p className="text-sm text-destructive mt-1">{errors.address}</p>
+              )}
             </div>
             
             <div className="grid grid-cols-2 gap-4">
@@ -168,17 +387,34 @@ function PaymentContent() {
                 <Label htmlFor="city">City</Label>
                 <Input
                   id="city"
+                  type="text"
                   placeholder="New York"
+                  value={formData.city}
+                  onChange={handleCityChange}
                   disabled={isProcessing}
+                  aria-invalid={!!errors.city}
+                  className={errors.city ? 'border-destructive' : ''}
                 />
+                {errors.city && (
+                  <p className="text-sm text-destructive mt-1">{errors.city}</p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="zip">ZIP Code</Label>
                 <Input
                   id="zip"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="10001"
+                  value={formData.zip}
+                  onChange={handleZipChange}
                   disabled={isProcessing}
+                  aria-invalid={!!errors.zip}
+                  className={errors.zip ? 'border-destructive' : ''}
                 />
+                {errors.zip && (
+                  <p className="text-sm text-destructive mt-1">{errors.zip}</p>
+                )}
               </div>
             </div>
           </CardContent>

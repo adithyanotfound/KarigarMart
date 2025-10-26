@@ -27,9 +27,10 @@ interface VideoPlayerProps {
   onAddToCart: (productId: string) => void
   onLike: (productId: string) => void
   onPauseChange?: (isPaused: boolean) => void
+  isAddingToCart?: boolean
 }
 
-export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseChange }: VideoPlayerProps) {
+export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseChange, isAddingToCart = false }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isMuted, setIsMuted, volume, setVolume, hasUserInteracted, setHasUserInteracted } = useVideoSettings()
   const [isPaused, setIsPaused] = useState(false)
@@ -211,9 +212,19 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
               size="sm"
               className="bg-black hover:bg-gray-800"
               onClick={handleAddToCart}
+              disabled={isAddingToCart}
             >
-              <ShoppingBag size={16} className="mr-2" />
-              Add to Cart
+              {isAddingToCart ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <ShoppingBag size={16} className="mr-2" />
+                  Add to Cart
+                </>
+              )}
             </Button>
           </div>
         </motion.div>

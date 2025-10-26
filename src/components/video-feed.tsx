@@ -32,7 +32,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
   const containerRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const { data: session } = useSession()
-  const { addToCart } = useCart()
+  const { addToCart, isAddingToCart } = useCart()
 
   const y = useMotionValue(0)
   const opacity = useTransform(y, [-100, 0, 100], [0.5, 1, 0.5])
@@ -252,6 +252,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
                 onAddToCart={handleAddToCart}
                 onLike={handleLike}
                 onPauseChange={index === currentIndex ? setCurrentVideoPaused : undefined}
+                isAddingToCart={isAddingToCart}
               />
             )}
           </motion.div>

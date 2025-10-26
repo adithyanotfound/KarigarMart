@@ -170,14 +170,18 @@ export function useCart() {
     staleTime: CACHE_DURATION,
     initialData: getCachedCart(),
     refetchOnWindowFocus: false,
-    onError: () => {
+  })
+
+  // Handle errors by using cached data
+  useEffect(() => {
+    if (error) {
       // Use cached data on error
       const cached = getCachedCart()
       if (cached) {
         queryClient.setQueryData(['cart'], cached)
       }
-    },
-  })
+    }
+  }, [error, queryClient])
 
   // Sync in background on mount and when cart changes from server
   useEffect(() => {
@@ -215,7 +219,7 @@ export function useCart() {
     // Check if item already exists
     const existingItemIndex = oldData?.items.findIndex(
       item => item.product.id === productId
-    )
+    ) ?? -1
 
     // Immediately update UI optimistically
     const currentCount = optimisticCartCount ?? cartCount

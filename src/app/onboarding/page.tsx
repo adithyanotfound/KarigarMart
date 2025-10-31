@@ -290,7 +290,18 @@ export default function OnboardingPage() {
 
     if (!response.ok) {
       const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to transcribe audio')
+      const message = (errorData?.error as string) || 'Failed to transcribe audio'
+      // Gracefully handle no-speech case by returning empty string
+      if (response.status === 400 && /no speech detected/i.test(message)) {
+        toast.info("No speech detected in the recording. Try speaking closer to the mic.")
+        return ""
+      }
+      // Surface known upstream errors without crashing the flow
+      if (response.status === 502) {
+        toast.error(message)
+        return ""
+      }
+      throw new Error(message)
     }
 
     const data = await response.json()

@@ -38,6 +38,12 @@ export function ArtisanOnboardingGuard({ children }: ArtisanOnboardingGuardProps
       return
     }
 
+    // Redirect unpaid artisans to payment immediately
+    if ((session.user as any).paid === false) {
+      router.push('/payment?total=10.00')
+      return
+    }
+
     // If we have onboarding status data
     if (onboardingStatus !== undefined) {
       if (!onboardingStatus.hasCompletedOnboarding) {

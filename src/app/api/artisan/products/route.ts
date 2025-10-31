@@ -75,6 +75,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Enforce free product limit of 5 per artisan
+    const existingCount = await prisma.product.count({
+      where: { artisanId: user.artisanProfile.id }
+    })
+    if (existingCount >= 5) {
+      return NextResponse.json(
+        {
+          error: "Free product limit reached. Additional products cost $2 each.",
+          requiredAmount: 2.0,
+          payUrl: `/payment?total=2.00`
+        },
+        { status: 402 }
+      )
+    }
+
     // Parse form data
     const formData = await request.formData()
     const title = formData.get("title") as string

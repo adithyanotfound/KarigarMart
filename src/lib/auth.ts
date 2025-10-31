@@ -45,7 +45,8 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           email: user.email,
           name: user.name,
-          role: user.role
+          role: user.role,
+          paid: (user as any).paid ?? true
         }
       }
     })
@@ -54,16 +55,22 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt"
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
-        token.role = user.role
+        token.role = (user as any).role
+        ;(token as any).paid = (user as any).paid ?? false
+      }
+      // Allow client-triggered session updates to modify the paid flag
+      if (trigger === 'update' && session && Object.prototype.hasOwnProperty.call(session, 'paid')) {
+        ;(token as any).paid = (session as any).paid === true
       }
       return token
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.sub!
-        session.user.role = token.role as string
+        session.user.role = (token as any).role as string
+        ;(session.user as any).paid = (token as any).paid ?? true
       }
       return session
     }

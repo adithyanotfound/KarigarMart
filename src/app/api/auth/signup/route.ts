@@ -34,13 +34,15 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash,
         name,
-        role
+        role,
+        paid: false
       },
       select: {
         id: true,
         email: true,
         name: true,
-        role: true
+        role: true,
+        paid: true
       }
     })
 

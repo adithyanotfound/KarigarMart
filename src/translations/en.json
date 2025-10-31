@@ -131,6 +131,8 @@
   },
   "profile": {
     "profile": "Profile",
+    "artisanStory": "Artisan Story",
+    "introduction": "Introduction",
     "editProfile": "Edit Profile",
     "personalInfo": "Personal Information",
     "contactInfo": "Contact Information",

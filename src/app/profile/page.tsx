@@ -188,22 +188,22 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="story">{t("profile.profile")}</Label>
+                        <Label htmlFor="story">{t("profile.introduction")}</Label>
                         <Textarea
                           id="story"
                           value={formData.story}
                           onChange={(e) => setFormData({ ...formData, story: e.target.value })}
-                          placeholder={t("profile.profile")}
+                          placeholder={t("profile.introduction")}
                           className="min-h-[100px]"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="about">{t("profile.profile")}</Label>
+                        <Label htmlFor="about">{t("profile.artisanStory")}</Label>
                         <Textarea
                           id="about"
                           value={formData.about}
                           onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                          placeholder={t("profile.profile")}
+                          placeholder={t("profile.artisanStory")}
                           className="min-h-[100px]"
                         />
                       </div>
@@ -211,12 +211,12 @@ export default function ProfilePage() {
                   ) : (
                     <div className="space-y-4">
                       <div>
-                        <h4 className="font-semibold text-foreground mb-2">{t("profile.profile")}</h4>
+                        <h4 className="font-semibold text-foreground mb-2">{t("profile.introduction")}</h4>
                         <p className="text-foreground">{profile.artisanProfile.story}</p>
                       </div>
                       {profile.artisanProfile.about && (
                         <div>
-                          <h4 className="font-semibold text-foreground mb-2">{t("profile.profile")}</h4>
+                          <h4 className="font-semibold text-foreground mb-2">{t("profile.artisanStory")}</h4>
                           <p className="text-foreground">{profile.artisanProfile.about}</p>
                         </div>
                       )}
@@ -280,18 +280,6 @@ export default function ProfilePage() {
                 {t("auth.signOut")}
               </Button>
             </div>
-
-            {/* App Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">{t("profile.profile")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  {t("profile.profile")}
-                </p>
-              </CardContent>
-            </Card>
           </motion.div>
         )}
       </div>

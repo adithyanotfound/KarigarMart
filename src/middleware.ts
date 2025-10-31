@@ -7,12 +7,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Define routes that require artisan onboarding
-  const artisanProtectedRoutes = ['/dashboard']
+  const artisanProtectedRoutes = ['/dashboard', '/onboarding', '/api/artisan']
   
   // Check if the current path is an artisan-protected route
-  const isArtisanRoute = artisanProtectedRoutes.some(route => 
-    pathname.startsWith(route)
-  )
+  const isArtisanRoute = artisanProtectedRoutes.some(route => pathname.startsWith(route))
 
   // If it's an artisan route and user is an artisan
   if (isArtisanRoute && token?.role === 'ARTISAN') {
@@ -26,6 +24,13 @@ export async function middleware(request: NextRequest) {
     if (!token) {
       return NextResponse.redirect(new URL('/auth/signin', request.url))
     }
+
+    // Redirect unpaid users to payment ($10 signup fee)
+    if ((token as any).paid === false && !pathname.startsWith('/payment')) {
+      const url = new URL('/payment', request.url)
+      url.searchParams.set('total', '10.00')
+      return NextResponse.redirect(url)
+    }
   }
 
   return NextResponse.next()
@@ -34,6 +39,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     '/dashboard/:path*',
-    '/onboarding/:path*'
+    '/onboarding/:path*',
+    '/api/artisan/:path*'
   ]
 }

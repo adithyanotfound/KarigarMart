@@ -86,12 +86,8 @@ export default function SignUpPage() {
         toast.error(t("common.error"))
       } else {
         toast.success(t("auth.accountCreatedSuccessfully"))
-        // Redirect based on role
-        if (formData.role === 'ARTISAN') {
-          router.push('/dashboard') // The ArtisanOnboardingGuard will handle the redirect
-        } else {
-          router.push('/')
-        }
+        // Immediately direct all new signups to payment ($10)
+        router.push('/payment?total=10.00')
       }
     } catch {
       setError(t("common.error"))

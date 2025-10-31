@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, Suspense } from "react"
+import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ArrowLeft, CreditCard, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
@@ -33,6 +34,7 @@ interface FormErrors {
 function PaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { update } = useSession()
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -47,6 +49,7 @@ function PaymentContent() {
   const [errors, setErrors] = useState<FormErrors>({})
 
   const total = searchParams.get('total') || '0.00'
+  const totalNumber = parseFloat(total)
 
   // Format card number with spaces (1234 5678 9012 3456)
   const formatCardNumber = (value: string): string => {
@@ -196,26 +199,31 @@ function PaymentContent() {
     setIsProcessing(true)
     
     try {
-      const response = await fetch('/api/order', {
-        method: 'POST',
-      });
+      // Simulate processing
+      await new Promise((r) => setTimeout(r, 1000))
 
-      if (!response.ok) {
-        throw new Error('Failed to create order');
+      // If signup payment ($10), mark user as paid
+      if (!isNaN(totalNumber) && totalNumber >= 10) {
+        try {
+          await fetch('/api/payment/complete', { method: 'POST' })
+          // Update session JWT so middleware sees paid=true immediately
+          await update({ paid: true })
+        } catch {}
       }
-      
-      setIsProcessing(false)
+
       setIsSuccess(true)
-      
-      // After 2 seconds, redirect to orders page
       setTimeout(() => {
-        router.push('/orders')
-      }, 2000)
+        // If it's an extra product payment, go back; else go to dashboard
+        if (!isNaN(totalNumber) && totalNumber < 10) {
+          router.back()
+        } else {
+          router.replace('/dashboard')
+        }
+      }, 1000)
 
     } catch (error) {
-      console.error(error);
-      setIsProcessing(false);
-      // You might want to show an error message to the user here
+      console.error(error)
+      setIsProcessing(false)
     }
   }
 

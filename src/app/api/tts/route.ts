@@ -6,6 +6,12 @@ const deepgram = createClient(process.env.DEEPGRAM_API_KEY!)
 
 export async function POST(request: NextRequest) {
   try {
+    if (!process.env.DEEPGRAM_API_KEY) {
+      return NextResponse.json(
+        { error: 'Missing DEEPGRAM_API_KEY' },
+        { status: 500 }
+      )
+    }
     const formData = await request.formData()
     const audioFile = formData.get('audio') as File
 
@@ -24,20 +30,28 @@ export async function POST(request: NextRequest) {
     // const mimeType = audioFile.type || 'audio/wav'
 
     // Use Deepgram for speech-to-text transcription
-    const { result, error } = await deepgram.listen.prerecorded.transcribeFile(
-      audioBuffer,
-      {
-        model: 'nova-3',
-        detect_language: true,
-        smart_format: true,
-      }
-    )
-
-    if (error) {
-      throw new Error(`Deepgram error: ${error.message}`)
+    let result: any
+    try {
+      const response = await deepgram.listen.prerecorded.transcribeFile(
+        audioBuffer,
+        {
+          model: 'nova-3',
+          detect_language: true,
+          smart_format: true,
+          // Provide mimetype hint to avoid mis-parsing on the server
+          mimetype: (audioFile as File).type || 'audio/wav',
+        }
+      )
+      result = response.result
+    } catch (dgErr: any) {
+      const message = dgErr?.message || 'Deepgram transcription failed'
+      return NextResponse.json(
+        { error: message },
+        { status: 502 }
+      )
     }
 
-    const transcript = result.results.channels[0].alternatives[0].transcript
+    const transcript = (result as any)?.results?.channels?.[0]?.alternatives?.[0]?.transcript || ""
 
     if (!transcript || transcript.trim().length === 0) {
       return NextResponse.json(

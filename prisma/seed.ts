@@ -13,6 +13,7 @@ async function main() {
       passwordHash: hashedPassword,
       name: 'Maria Rodriguez',
       role: 'ARTISAN',
+      paid: true,
       artisanProfile: {
         create: {
           story: 'I\'ve been crafting handmade jewelry for over 15 years, inspired by my grandmother\'s traditional techniques from Mexico. Each piece tells a story of heritage and modern creativity.',
@@ -31,6 +32,7 @@ async function main() {
       passwordHash: hashedPassword,
       name: 'James Chen',
       role: 'ARTISAN',
+      paid: true,
       artisanProfile: {
         create: {
           story: 'After a career in tech, I discovered my passion for woodworking. I create unique furniture pieces using sustainable materials and traditional joinery techniques.',
@@ -49,6 +51,7 @@ async function main() {
       passwordHash: hashedPassword,
       name: 'Sophie Laurent',
       role: 'ARTISAN',
+      paid: true,
       artisanProfile: {
         create: {
           story: 'Growing up in France, I learned the art of pottery from my mother. My ceramics blend contemporary design with timeless French traditions.',
@@ -152,7 +155,8 @@ async function main() {
       email: 'user@example.com',
       passwordHash: hashedPassword,
       name: 'John Doe',
-      role: 'USER'
+      role: 'USER',
+      paid: true
     }
   })
 

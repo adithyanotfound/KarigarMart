@@ -25,6 +25,7 @@ model User {
   name         String
   role         Role     @default(USER)
   createdAt    DateTime @default(now())
+  paid         Boolean  @default(false)
   
   // Relations
   artisanProfile ArtisanProfile?

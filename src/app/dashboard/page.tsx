@@ -671,8 +671,8 @@ export default function DashboardPage() {
                                     </div>
                                   </DialogContent>
                                 </Dialog>
-                                {stats?.productStats && (
-                                  <ProductStatsDialog productStats={stats.productStats.find(p => p.id === product.id)!} />
+                                {(
+                                  <ProductStatsDialog productStats={stats?.productStats?.find(p => p.id === product.id)} />
                                 )}
                             </div>
                           </div>

@@ -15,15 +15,19 @@ interface ProductStats {
 }
 
 interface ProductStatsDialogProps {
-  productStats: ProductStats;
+  productStats?: ProductStats;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 function ProductStatsDialog({ productStats }: ProductStatsDialogProps) {
+  const title = productStats?.title ?? "Product";
+  const totalQuantitySold = productStats?.totalQuantitySold ?? 0;
+  const totalRevenue = productStats?.totalRevenue ?? 0;
+
   const data = [
-    { name: 'Quantity Sold', value: productStats.totalQuantitySold },
-    { name: 'Revenue', value: productStats.totalRevenue },
+    { name: 'Quantity Sold', value: totalQuantitySold },
+    { name: 'Revenue', value: totalRevenue },
   ];
 
   return (
@@ -36,7 +40,7 @@ function ProductStatsDialog({ productStats }: ProductStatsDialogProps) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{productStats.title} - Statistics</DialogTitle>
+          <DialogTitle>{title} - Statistics</DialogTitle>
         </DialogHeader>
         <div className="mt-4">
             <div className="grid grid-cols-2 gap-4 text-center">
@@ -45,7 +49,7 @@ function ProductStatsDialog({ productStats }: ProductStatsDialogProps) {
                         <CardTitle>Total Sold</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{productStats.totalQuantitySold}</p>
+                        <p className="text-2xl font-bold">{totalQuantitySold}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -53,7 +57,7 @@ function ProductStatsDialog({ productStats }: ProductStatsDialogProps) {
                         <CardTitle>Total Revenue</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">${productStats.totalRevenue.toFixed(2)}</p>
+                        <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
                     </CardContent>
                 </Card>
             </div>

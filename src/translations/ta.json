@@ -191,7 +191,9 @@
     "view": "காண்க",
     "added": "சேர்க்கப்பட்டது",
     "totalSalesTooltip": "மொத்த விற்பனை",
-    "downloadStarted": "பதிவேற்றுகிறது..."
+    "downloadStarted": "பதிவிறக்கம் தொடங்குகிறது...",
+    "delete": "அழிக்க",
+    "productDeleted": "தயாரிப்பு அழிக்கப்பட்டது"
   },
   "onboarding": {
     "welcome": "வருக",

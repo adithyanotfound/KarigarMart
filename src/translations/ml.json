@@ -191,7 +191,9 @@
     "view": "കാണുക",
     "added": "ചേർത്തു",
     "totalSalesTooltip": "മൊത്തം വിൽപ്പന",
-    "downloadStarted": "ഡൌന്ലോഡ് ആരംഭിക്കുന്നു..."
+    "downloadStarted": "ഡൌന്ലോഡ് ആരംഭിക്കുന്നു...",
+    "delete": "ഇല്ലാതാക്കുക",
+    "productDeleted": "ഉൽപ്പന്നം ഇല്ലാതാക്കി"
   },
   "onboarding": {
     "welcome": "സ്വാഗതം",

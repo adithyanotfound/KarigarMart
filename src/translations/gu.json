@@ -191,7 +191,9 @@
     "view": "જુઓ",
     "added": "ઉમેરેલ",
     "totalSalesTooltip": "કુલ વેચાણ",
-    "downloadStarted": "ડાઉનલોડ શરૂ થઈ રહ્યું છે..."
+    "downloadStarted": "ડાઉનલોડ શરૂ થઈ રહ્યું છે...",
+    "delete": "કાઢી નાખો",
+    "productDeleted": "ઉત્પાદન કાઢી નાખ્યું"
   },
   "onboarding": {
     "welcome": "સ્વાગત છે",

@@ -193,7 +193,9 @@
     "view": "View",
     "added": "Added",
     "totalSalesTooltip": "Total Sales",
-    "downloadStarted": "Download started..."
+    "downloadStarted": "Download started...",
+    "delete": "Delete",
+    "productDeleted": "Product deleted"
   },
   "onboarding": {
     "welcome": "Welcome",

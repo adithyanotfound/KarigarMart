@@ -191,7 +191,9 @@
     "view": "देखें",
     "added": "जोड़ा गया",
     "totalSalesTooltip": "कुल बिक्री",
-    "downloadStarted": "डाउनलोड शुरू हो रहा है..."
+    "downloadStarted": "डाउनलोड शुरू हो रहा है...",
+    "delete": "हटाएं",
+    "productDeleted": "उत्पाद हटाया गया"
   },
   "onboarding": {
     "welcome": "स्वागत है",

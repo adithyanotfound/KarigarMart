@@ -191,7 +191,9 @@
     "view": "ವೀಕ್ಷಿಸು",
     "added": "ಸೇರಿಸಲಾಗಿದೆ",
     "totalSalesTooltip": "ಒಟ್ಟು ಮಾರಾಟ",
-    "downloadStarted": "ಡೌನ್ಲೋಡ್ ಆರಂಭವಾಗಿದೆ..."
+    "downloadStarted": "ಡೌನ್ಲೋಡ್ ಆರಂಭವಾಗಿದೆ...",
+    "delete": "ಅಳಿಸು",
+    "productDeleted": "ಉತ್ಪನ್ನ ಅಳಿಸಲಾಗಿದೆ"
   },
   "onboarding": {
     "welcome": "ಸ್ವಾಗತ",

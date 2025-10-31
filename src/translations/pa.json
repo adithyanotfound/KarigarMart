@@ -191,7 +191,9 @@
     "view": "ਦੇਖੋ",
     "added": "ਜੋੜਿਆ ਗਿਆ",
     "totalSalesTooltip": "ਕੁੱਲ ਵਿਕਰੀ",
-    "downloadStarted": "ਡਾਊਨਲੋਡ ਸ਼ੁਰੂ ਹੋ ਰਹਿ ਰਿਹਾ ਹੈ..."
+    "downloadStarted": "ਡਾਊਨਲੋਡ ਸ਼ੁਰੂ ਹੋ ਰਹਿ ਰਿਹਾ ਹੈ...",
+    "delete": "ਹਟਾਉ",
+    "productDeleted": "ਉਤਪਾਦ ਹਟਾਇਆ ਗਿਆ"
   },
   "onboarding": {
     "welcome": "ਜੀ ਆਇਆਂ ਨੂੰ",

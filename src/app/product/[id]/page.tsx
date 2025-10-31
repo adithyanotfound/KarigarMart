@@ -167,25 +167,6 @@ export default function ProductPage() {
                 </div>
 
                 {/* Artisan Info */}
-                {/* View Reel Button */}
-                <Card>
-                  <CardContent className="p-4">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="w-full bg-black hover:bg-gray-800 text-white">
-                          <Play className="mr-2 h-4 w-4" />
-                          View Product Reel
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[95vh] flex flex-col">
-                        <DialogHeader className="flex-shrink-0">
-                          <DialogTitle>{product.title} - Product Reel</DialogTitle>
-                        </DialogHeader>
-                        <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
-                      </DialogContent>
-                    </Dialog>
-                  </CardContent>
-                </Card>
 
                 <Card>
                   <CardContent className="p-6">
@@ -227,27 +208,7 @@ export default function ProductPage() {
               </Badge>
             </div>
 
-            {/* View Reel Button */}
-            <Card>
-              <CardContent className="p-4">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="w-full bg-black hover:bg-gray-800 text-white">
-                      <Play className="mr-2 h-4 w-4" />
-                      View Product Reel
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[85vh] sm:max-h-[95vh] flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle>{product.title} - Product Reel</DialogTitle>
-                    </DialogHeader>
-                    <div className="flex-1 min-h-0">
-                      <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
+            {/* Reel view option removed */}
 
             {/* Artisan Info */}
             <Card>

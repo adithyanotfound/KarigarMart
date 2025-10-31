@@ -191,7 +191,9 @@
     "view": "দেখুন",
     "added": "যোগ করা হয়েছে",
     "totalSalesTooltip": "মোট বিক্রয়",
-    "downloadStarted": "ডাউনলোড শুরু হয়েছে..."
+    "downloadStarted": "ডাউনলোড শুরু হয়েছে...",
+    "delete": "মুছে ফেলুন",
+    "productDeleted": "পণ্য মুছে ফেলা হয়েছে"
   },
   "onboarding": {
     "welcome": "স্বাগতম",

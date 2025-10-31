@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { Plus, Package, DollarSign, Eye, ArrowLeft, Image as ImageIcon, Sparkles, TrendingUp, CalendarDays, ShoppingBag, Download, Play } from "lucide-react"
+import { Plus, Package, DollarSign, Eye, ArrowLeft, Image as ImageIcon, Sparkles, TrendingUp, CalendarDays, ShoppingBag, Download, Play, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,11 +60,21 @@ async function fetchArtisanProducts() {
 // Enhanced Video Player Component
 function EnhancedVideoPlayer({ videoUrl, title }: { videoUrl: string; title: string }) {
   return (
-    <div className="bg-black rounded-lg overflow-hidden select-none video-container" style={{ height: '100%', minHeight: '400px' }}>
-      <video 
-        src={videoUrl} 
-        controls 
-        className="w-full h-full"
+    <div
+      className="bg-black rounded-lg overflow-hidden select-none flex items-center justify-center"
+      style={{ height: 'calc(90vh - 180px)' }}
+    >
+      <video
+        src={videoUrl}
+        controls
+        className="block"
+        style={{
+          height: '100%',
+          width: 'auto',
+          maxHeight: '100%',
+          aspectRatio: '9 / 16',
+          objectFit: 'contain'
+        }}
         onContextMenu={(e) => e.preventDefault()}
         onDragStart={(e) => e.preventDefault()}
       />
@@ -133,6 +143,25 @@ export default function DashboardPage() {
       setShowExitWarning(false)
       toast.error(error.message)
       console.error('Create product error:', error)
+    }
+  })
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to delete product')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['artisan-products'] })
+      queryClient.invalidateQueries({ queryKey: ['artisan-stats'] })
+      toast.success(t("dashboard.productDeleted") || 'Product deleted')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message)
     }
   })
 
@@ -655,15 +684,17 @@ export default function DashboardPage() {
                                       <span className="hidden sm:inline">Reel</span>
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent className="sm:max-w-[800px] w-[95vw] max-h-[90vh] flex flex-col">
+                                  <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] flex flex-col overflow-hidden">
                                     <DialogHeader className="flex-shrink-0 pb-4">
                                       <DialogTitle>{product.title} - Product Reel</DialogTitle>
                                     </DialogHeader>
-                                    <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
+                                    <div className="flex-1 min-h-0">
+                                      <EnhancedVideoPlayer videoUrl={product.videoUrl} title={product.title} />
+                                    </div>
                                     <div className="flex justify-end pt-4 flex-shrink-0">
                                       <Button
                                         onClick={() => handleDownloadReel(product.videoUrl, product.title)}
-                                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                                        className="bg-black hover:bg-gray-800 text-white"
                                       >
                                         <Download className="mr-2 h-4 w-4" />
                                         Download Reel
@@ -671,6 +702,16 @@ export default function DashboardPage() {
                                     </div>
                                   </DialogContent>
                                 </Dialog>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs sm:text-sm px-2 sm:px-3 text-red-600 border-red-200 hover:bg-red-50"
+                                  onClick={() => deleteProductMutation.mutate(product.id)}
+                                  disabled={deleteProductMutation.isPending}
+                                >
+                                  <Trash2 size={12} className="mr-1" />
+                                  <span className="hidden sm:inline">{t("dashboard.delete") || 'Delete'}</span>
+                                </Button>
                                 {(
                                   <ProductStatsDialog productStats={stats?.productStats?.find(p => p.id === product.id)} />
                                 )}

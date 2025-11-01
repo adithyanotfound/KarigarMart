@@ -212,14 +212,13 @@ function PaymentContent() {
       }
 
       setIsSuccess(true)
-      setTimeout(() => {
-        // If it's an extra product payment, go back; else go to dashboard
-        if (!isNaN(totalNumber) && totalNumber < 10) {
-          router.back()
-        } else {
-          router.replace('/dashboard')
-        }
-      }, 1000)
+      // Remove the timeout to prevent race conditions with session update
+      // If it's an extra product payment, go back; else go to dashboard
+      if (!isNaN(totalNumber) && totalNumber < 10) {
+        router.back()
+      } else {
+        router.push('/dashboard')
+      }
 
     } catch (error) {
       console.error(error)
@@ -239,7 +238,14 @@ function PaymentContent() {
             <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
             <p className="text-muted-foreground mb-4">Thank you for your purchase.</p>
-            <p className="text-sm text-muted-foreground">Redirecting to your orders...</p>
+            <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
+            <Button
+              onClick={() => router.push('/dashboard')}
+              className="mt-4"
+              variant="default"
+            >
+              Go to Dashboard
+            </Button>
           </motion.div>
         </div>
       </AuthGuard>

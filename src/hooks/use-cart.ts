@@ -142,6 +142,8 @@ async function fetchProduct(productId: string): Promise<any> {
   return response.json()
 }
 
+export { clearCartCache }  // Export clearCartCache function
+
 export function useCart() {
   const { data: session } = useSession()
   const router = useRouter()

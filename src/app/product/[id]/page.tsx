@@ -71,19 +71,6 @@ export default function ProductPage() {
     addToCart(productId, quantity)
   }
 
-  const handleBuyNow = () => {
-    if (!session) {
-      router.push('/auth/signin')
-      return
-    }
-    
-    // Add to cart first
-    addToCart(productId, quantity)
-    // Then redirect to payment
-    const total = Number(product?.price || 0) * quantity
-    router.push(`/payment?total=${total.toFixed(2)}`)
-  }
-
   const handleLike = () => {
     setIsLiked(!isLiked)
     // In a real app, this would make an API call to save the like
@@ -276,13 +263,6 @@ export default function ProductPage() {
                 </>
               )}
             </Button>
-            <Button
-              className="flex-1 bg-black hover:bg-gray-800"
-              onClick={handleBuyNow}
-              disabled={isAddingToCart}
-            >
-              Buy Now
-            </Button>
           </div>
         </div>
       </div>
@@ -344,14 +324,6 @@ export default function ProductPage() {
                       Add to Cart
                     </>
                   )}
-                </Button>
-                <Button
-                  size="lg"
-                  className="bg-black hover:bg-gray-800 px-8"
-                  onClick={handleBuyNow}
-                  disabled={isAddingToCart}
-                >
-                  Buy Now
                 </Button>
               </div>
             </div>

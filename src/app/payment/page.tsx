@@ -3,13 +3,16 @@
 import { useState, Suspense } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 import { ArrowLeft, CreditCard, CheckCircle } from "lucide-react"
 import { motion } from "framer-motion"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AuthGuard } from "@/components/auth-guard"
+import { clearCartCache } from "@/hooks/use-cart"
 
 interface PaymentFormData {
   cardNumber: string
@@ -35,8 +38,9 @@ function PaymentContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { update } = useSession()
-  const [isProcessing, setIsProcessing] = useState(false)
+  const queryClient = useQueryClient()
   const [isSuccess, setIsSuccess] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [formData, setFormData] = useState<PaymentFormData>({
     cardNumber: '',
     expiry: '',
@@ -204,24 +208,44 @@ function PaymentContent() {
 
       // If signup payment ($10), mark user as paid
       if (!isNaN(totalNumber) && totalNumber >= 10) {
+        // For signup/artisan fee payment
         try {
           await fetch('/api/payment/complete', { method: 'POST' })
           // Update session JWT so middleware sees paid=true immediately
           await update({ paid: true })
         } catch {}
-      }
-
-      setIsSuccess(true)
-      // Remove the timeout to prevent race conditions with session update
-      // If it's an extra product payment, go back; else go to dashboard
-      if (!isNaN(totalNumber) && totalNumber < 10) {
-        router.back()
       } else {
-        router.push('/dashboard')
+        // For cart checkout
+        const orderResponse = await fetch('/api/order', { 
+          method: 'POST',
+        })
+        
+        if (!orderResponse.ok) {
+          const error = await orderResponse.json()
+          throw new Error(error.error || 'Failed to create order')
+        }
+
+        // Clear cart data after successful cart checkout
+        clearCartCache()
+        queryClient.invalidateQueries({ queryKey: ['cart'] })
+      }
+      
+      // Set success state first
+      setIsSuccess(true)
+
+      // Wait a bit to ensure all state updates are processed
+      await new Promise((r) => setTimeout(r, 500))
+
+      // Handle redirects based on payment type
+      if (!isNaN(totalNumber) && totalNumber >= 10) {
+        await router.push('/dashboard')
+      } else {
+        router.push('/')
       }
 
     } catch (error) {
-      console.error(error)
+      console.error('Payment error:', error)
+      toast.error('Failed to process payment')
       setIsProcessing(false)
     }
   }
@@ -238,13 +262,25 @@ function PaymentContent() {
             <CheckCircle size={80} className="text-green-500 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
             <p className="text-muted-foreground mb-4">Thank you for your purchase.</p>
-            <p className="text-sm text-muted-foreground">Redirecting to your dashboard...</p>
+            <p className="text-sm text-muted-foreground">
+              {!isNaN(totalNumber) && totalNumber >= 10 
+                ? "Redirecting to your dashboard..."
+                : "Redirecting to home..."}
+            </p>
             <Button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => {
+                if (!isNaN(totalNumber) && totalNumber >= 10) {
+                  router.push('/dashboard')
+                } else {
+                  router.push('/')
+                }
+              }}
               className="mt-4"
               variant="default"
             >
-              Go to Dashboard
+              {!isNaN(totalNumber) && totalNumber >= 10 
+                ? "Go to Dashboard"
+                : "Continue Shopping"}
             </Button>
           </motion.div>
         </div>

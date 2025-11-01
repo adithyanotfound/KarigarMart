@@ -42,6 +42,7 @@ export default function SignInPage() {
       } else {
         toast.success(t("auth.welcomeBackMessage"))
         // Get updated session to check user role
+        await new Promise((res) => setTimeout(res, 500)); 
         const session = await getSession()
         
         if (session?.user?.role === 'ARTISAN') {

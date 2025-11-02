@@ -245,7 +245,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
               mass: 1
             }}
           >
-            {Math.abs(index - currentIndex) <= 1 && (
+            {Math.abs(index - currentIndex) <= 3 && (
               <VideoPlayer
                 product={product}
                 isActive={index === currentIndex}
@@ -253,6 +253,7 @@ export function VideoFeed({ onPauseChange }: VideoFeedProps = {}) {
                 onLike={handleLike}
                 onPauseChange={index === currentIndex ? setCurrentVideoPaused : undefined}
                 isAddingToCart={isAddingToCart}
+                preloadMode={index === currentIndex ? "auto" : index > currentIndex ? "auto" : "none"}
               />
             )}
           </motion.div>

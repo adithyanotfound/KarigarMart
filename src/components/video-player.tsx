@@ -28,9 +28,10 @@ interface VideoPlayerProps {
   onLike: (productId: string) => void
   onPauseChange?: (isPaused: boolean) => void
   isAddingToCart?: boolean
+  preloadMode?: "none" | "metadata" | "auto"
 }
 
-export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseChange, isAddingToCart = false }: VideoPlayerProps) {
+export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseChange, isAddingToCart = false, preloadMode }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isMuted, setIsMuted, volume, setVolume, hasUserInteracted, setHasUserInteracted } = useVideoSettings()
   const [isPaused, setIsPaused] = useState(false)
@@ -133,7 +134,7 @@ export function VideoPlayer({ product, isActive, onAddToCart, onLike, onPauseCha
         loop
         muted={isMuted}
         playsInline
-        preload="metadata"
+        preload={preloadMode || "metadata"}
       />
 
       {/* Gradient overlay */}

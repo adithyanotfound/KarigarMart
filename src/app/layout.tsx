@@ -61,7 +61,7 @@ export default function RootLayout({
                 <EthereumFix />
                 {children}
                 <PWAPrompt />
-                <Toaster richColors position="bottom-left" />
+                <Toaster richColors position="top-center" duration={2000}/>
               </VideoSettingsProvider>
             </LanguageProvider>
           </AuthSessionProvider>

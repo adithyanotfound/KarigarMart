@@ -116,7 +116,7 @@ export default function OnboardingPage() {
           }
         } catch (error) {
           console.error('Transcription error:', error)
-          toast.error("Failed to transcribe audio. You can still type manually.")
+          toast.error("No speech detected in the recording. Failed to transcribe audio.")
         } finally {
           setIsTranscribingAbout(false)
         }

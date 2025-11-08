@@ -211,10 +211,21 @@ function PaymentContent() {
       if (paymentType === 'signup') {
         // For signup/artisan fee payment
         try {
-          await fetch('/api/payment/complete', { method: 'POST' })
+          const paymentResponse = await fetch('/api/payment/complete', { method: 'POST' })
+          if (!paymentResponse.ok) {
+            throw new Error('Failed to mark payment as complete')
+          }
           // Update session JWT so middleware sees paid=true immediately
           await update({ paid: true })
-        } catch {}
+          // Wait for session to update and force a full page reload to refresh JWT token
+          await new Promise((r) => setTimeout(r, 1000))
+          // Use window.location for full page reload to ensure JWT token is refreshed
+          window.location.href = '/dashboard'
+          return // Exit early to prevent further execution
+        } catch (error) {
+          console.error('Payment completion error:', error)
+          throw error
+        }
       } else {
         // For cart checkout
         const orderResponse = await fetch('/api/order', { 
@@ -229,18 +240,13 @@ function PaymentContent() {
         // Clear cart data after successful cart checkout
         clearCartCache()
         queryClient.invalidateQueries({ queryKey: ['cart'] })
-      }
-      
-      // Set success state first
-      setIsSuccess(true)
+        
+        // Set success state first
+        setIsSuccess(true)
 
-      // Wait a bit to ensure all state updates are processed
-      await new Promise((r) => setTimeout(r, 500))
+        // Wait a bit to ensure all state updates are processed
+        await new Promise((r) => setTimeout(r, 500))
 
-      // Handle redirects based on payment type
-      if (paymentType === 'signup') {
-        await router.push('/dashboard')
-      } else {
         router.push('/')
       }
 
@@ -271,7 +277,8 @@ function PaymentContent() {
             <Button
               onClick={() => {
                 if (paymentType === 'signup') {
-                  router.push('/dashboard')
+                  // Force full page reload to ensure JWT token is refreshed
+                  window.location.href = '/dashboard'
                 } else {
                   router.push('/')
                 }

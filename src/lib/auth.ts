@@ -62,7 +62,25 @@ export const authOptions: NextAuthOptions = {
       }
       // Allow client-triggered session updates to modify the paid flag
       if (trigger === 'update' && session && Object.prototype.hasOwnProperty.call(session, 'paid')) {
-        ;(token as any).paid = (session as any).paid === true
+        // Fetch latest user data from database to ensure we have the most up-to-date paid status
+        if (token.sub) {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: token.sub },
+              select: { paid: true }
+            })
+            if (dbUser) {
+              ;(token as any).paid = dbUser.paid ?? false
+            } else {
+              ;(token as any).paid = (session as any).paid === true
+            }
+          } catch (error) {
+            // Fallback to session value if database fetch fails
+            ;(token as any).paid = (session as any).paid === true
+          }
+        } else {
+          ;(token as any).paid = (session as any).paid === true
+        }
       }
       return token
     },

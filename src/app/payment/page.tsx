@@ -54,6 +54,7 @@ function PaymentContent() {
 
   const total = searchParams.get('total') || '0.00'
   const totalNumber = parseFloat(total)
+  const paymentType = searchParams.get('type') || 'cart' // Default to 'cart' for backward compatibility
 
   // Format card number with spaces (1234 5678 9012 3456)
   const formatCardNumber = (value: string): string => {
@@ -206,8 +207,8 @@ function PaymentContent() {
       // Simulate processing
       await new Promise((r) => setTimeout(r, 1000))
 
-      // If signup payment ($10), mark user as paid
-      if (!isNaN(totalNumber) && totalNumber >= 10) {
+      // Determine payment type based on type parameter
+      if (paymentType === 'signup') {
         // For signup/artisan fee payment
         try {
           await fetch('/api/payment/complete', { method: 'POST' })
@@ -237,7 +238,7 @@ function PaymentContent() {
       await new Promise((r) => setTimeout(r, 500))
 
       // Handle redirects based on payment type
-      if (!isNaN(totalNumber) && totalNumber >= 10) {
+      if (paymentType === 'signup') {
         await router.push('/dashboard')
       } else {
         router.push('/')
@@ -263,13 +264,13 @@ function PaymentContent() {
             <h1 className="text-2xl font-bold text-foreground mb-2">Payment Successful!</h1>
             <p className="text-muted-foreground mb-4">Thank you for your purchase.</p>
             <p className="text-sm text-muted-foreground">
-              {!isNaN(totalNumber) && totalNumber >= 10 
+              {paymentType === 'signup'
                 ? "Redirecting to your dashboard..."
                 : "Redirecting to home..."}
             </p>
             <Button
               onClick={() => {
-                if (!isNaN(totalNumber) && totalNumber >= 10) {
+                if (paymentType === 'signup') {
                   router.push('/dashboard')
                 } else {
                   router.push('/')
@@ -278,7 +279,7 @@ function PaymentContent() {
               className="mt-4"
               variant="default"
             >
-              {!isNaN(totalNumber) && totalNumber >= 10 
+              {paymentType === 'signup'
                 ? "Go to Dashboard"
                 : "Continue Shopping"}
             </Button>

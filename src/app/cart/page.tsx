@@ -35,7 +35,7 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (cart && cart.items.length > 0) {
-      router.push(`/payment?total=${cart.total.toFixed(2)}`)
+      router.push(`/payment?total=${cart.total.toFixed(2)}&type=cart`)
     }
   }
 

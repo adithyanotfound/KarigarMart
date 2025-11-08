@@ -87,7 +87,7 @@ export default function SignUpPage() {
       } else {
         toast.success(t("auth.accountCreatedSuccessfully"))
         // Immediately direct all new signups to payment ($10)
-        router.push('/payment?total=10.00')
+        router.push('/payment?total=10.00&type=signup')
       }
     } catch {
       setError(t("common.error"))

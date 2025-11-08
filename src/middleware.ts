@@ -29,6 +29,7 @@ export async function middleware(request: NextRequest) {
     if ((token as any).paid === false && !pathname.startsWith('/payment')) {
       const url = new URL('/payment', request.url)
       url.searchParams.set('total', '10.00')
+      url.searchParams.set('type', 'signup')
       return NextResponse.redirect(url)
     }
   }

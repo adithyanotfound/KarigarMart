@@ -40,7 +40,7 @@ export function ArtisanOnboardingGuard({ children }: ArtisanOnboardingGuardProps
 
     // Redirect unpaid artisans to payment immediately
     if ((session.user as any).paid === false) {
-      router.push('/payment?total=10.00')
+      router.push('/payment?total=10.00&type=signup')
       return
     }
 

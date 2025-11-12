@@ -65,7 +65,7 @@ function PaymentContent() {
         },
         body: JSON.stringify({
           amount: totalNumber,
-          currency: 'INR',
+          currency: 'USD',
           paymentType: paymentType,
         }),
       })
